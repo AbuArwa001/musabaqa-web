@@ -48,10 +48,15 @@ export default async function LocaleLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-jamia-cream text-jamia-dark antialiased">
+      <body className="min-h-screen bg-[#120e0c] text-stone-300 antialiased font-sans select-none overflow-x-hidden">
+        {/* Background ambient orbs for the whole site */}
+        <div className="fixed top-[-10%] -left-20 w-[500px] h-[500px] bg-emerald-700/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+        <div className="fixed bottom-[-10%] -right-20 w-[500px] h-[500px] bg-[#c99335]/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+        <div className="fixed inset-0 bg-[radial-gradient(#c99335_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.02] pointer-events-none -z-10" />
+        
         <Navbar lang={lang} dict={dict} />
-        <main>{children}</main>
-        <footer className="border-t border-jamia-dark/10 mt-24 py-10 text-center text-jamia-dark/40 text-sm">
+        <main className="relative z-0">{children}</main>
+        <footer className="relative z-10 border-t border-white/5 mt-24 py-10 text-center text-stone-500 text-sm">
           <p>© 2025 Jamia Mosque Nairobi — Musabaqa</p>
         </footer>
       </body>
