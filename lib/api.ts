@@ -19,19 +19,32 @@ async function request<T>(
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers })
+  const url = `${API_URL}${path}`
+  const res = await fetch(url, { ...options, headers })
 
   if (!res.ok) {
     let detail = res.statusText
     try {
-      const body = await res.json()
-      detail = body.detail || detail
+      const text = await res.text()
+      try {
+        const body = JSON.parse(text)
+        detail = body.detail || detail
+      } catch (e) {
+        console.error(`[API ERROR PARSING !ok] ${res.status} ${url}. Text: ${text.substring(0, 500)}`)
+      }
     } catch {}
     throw new ApiError(res.status, detail)
   }
 
   if (res.status === 204) return undefined as T
-  return res.json()
+  
+  const text = await res.text()
+  try {
+    return JSON.parse(text)
+  } catch (e) {
+    console.error(`[API ERROR PARSING ok] 200 ${url}. Text length: ${text.length}. Snippet: ${text.substring(0, 500)}...${text.substring(text.length - 200)}`)
+    throw e
+  }
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
