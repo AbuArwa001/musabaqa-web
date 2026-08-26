@@ -1,26 +1,89 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-jamia-dark: #1a1512;
+  --color-jamia-gold: #c99335;
+  --color-jamia-gold-hover: #e39e3b;
+  --color-jamia-brown: #4a2311;
+  --color-jamia-orange: #db5a27;
+  --color-jamia-teal: #5ea38c;
+  --color-jamia-cream: #fcf9f2;
+  --color-jamia-emerald: #006838;
+  --color-jamia-emerald-dark: #004d29;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-jamia-cream);
+    color: var(--color-jamia-dark);
+    font-family: 'Outfit', 'Noto Sans Arabic', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cinzel', 'Noto Kufi Arabic', system-ui, serif;
+  }
+
+  /* Arabic: use Amiri / Noto Naskh Arabic for body + Noto Kufi Arabic for headings */
+  [dir=tl] {
+    font-family: 'Noto Sans Arabic', 'Amiri', system-ui, sans-serif;
+  }
+
+  /* Smooth RTL transitions */
+  [dir=tl] .flip-rtl {
+    transform: scaleX(-1);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .btn-primary {
+    @apply bg-jamia-emerald hover:bg-jamia-emerald-dark text-white font-semibold px-6 py-3 rounded-xl
+           transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-jamia-cream hover:bg-white text-jamia-emerald font-semibold px-6 py-3 rounded-xl
+           border-2 border-jamia-emerald transition-all duration-200 active:scale-95;
+  }
+
+  .card {
+    @apply bg-white border border-jamia-dark/10 rounded-2xl p-6 shadow-xl;
+  }
+
+  .input-field {
+    @apply w-full bg-white border border-jamia-dark/20 text-jamia-dark rounded-xl px-4 py-3
+           placeholder-jamia-dark/40 focus:outline-none focus:border-jamia-emerald focus:bg-white
+           transition-colors duration-200 shadow-sm;
+  }
+
+  .label {
+    @apply text-sm font-medium text-jamia-dark/80 mb-1.5 block;
+  }
+
+  .error-text {
+    @apply text-red-500 text-sm mt-1;
+  }
+
+  .badge-pending {
+    @apply bg-jamia-gold/10 text-jamia-gold border border-jamia-gold/30 text-xs px-2.5 py-1 rounded-full font-semibold;
+  }
+
+  .badge-approved {
+    @apply bg-jamia-emerald/10 text-jamia-emerald border border-jamia-emerald/30 text-xs px-2.5 py-1 rounded-full font-semibold;
+  }
+
+  .badge-rejected {
+    @apply bg-red-500/10 text-red-600 border border-red-500/30 text-xs px-2.5 py-1 rounded-full font-semibold;
+  }
+
+  .live-dot {
+    @apply w-2 h-2 rounded-full bg-jamia-emerald animate-pulse;
+  }
 }
