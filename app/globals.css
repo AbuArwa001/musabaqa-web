@@ -44,46 +44,44 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-jamia-emerald hover:bg-jamia-emerald-dark text-white font-semibold px-6 py-3 rounded-xl
-           transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md;
+    @apply bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] border border-emerald-500/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-jamia-cream hover:bg-white text-jamia-emerald font-semibold px-6 py-3 rounded-xl
-           border-2 border-jamia-emerald transition-all duration-200 active:scale-95;
+    @apply bg-white/5 hover:bg-white/10 text-stone-300 font-medium px-6 py-3 rounded-xl border border-white/10 transition-all duration-300 active:scale-95;
   }
 
   .card {
-    @apply bg-white border border-jamia-dark/10 rounded-2xl p-6 shadow-xl;
+    @apply bg-white/5 border border-white/10 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl;
   }
 
   .input-field {
-    @apply w-full bg-white border border-jamia-dark/20 text-jamia-dark rounded-xl px-4 py-3
-           placeholder-jamia-dark/40 focus:outline-none focus:border-jamia-emerald focus:bg-white
-           transition-colors duration-200 shadow-sm;
+    @apply w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3
+           placeholder-stone-500 focus:outline-none focus:border-amber-500/50 focus:bg-black/60
+           focus:shadow-[0_0_15px_rgba(201,147,53,0.15)] transition-all duration-300;
   }
 
   .label {
-    @apply text-sm font-medium text-jamia-dark/80 mb-1.5 block;
+    @apply text-sm font-medium text-stone-300 mb-1.5 block;
   }
 
   .error-text {
-    @apply text-red-500 text-sm mt-1;
+    @apply text-red-400 text-sm mt-1.5;
   }
 
   .badge-pending {
-    @apply bg-jamia-gold/10 text-jamia-gold border border-jamia-gold/30 text-xs px-2.5 py-1 rounded-full font-semibold;
+    @apply bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs px-3 py-1 rounded-full font-medium shadow-[0_0_10px_rgba(245,158,11,0.2)];
   }
 
   .badge-approved {
-    @apply bg-jamia-emerald/10 text-jamia-emerald border border-jamia-emerald/30 text-xs px-2.5 py-1 rounded-full font-semibold;
+    @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs px-3 py-1 rounded-full font-medium shadow-[0_0_10px_rgba(16,185,129,0.2)];
   }
 
   .badge-rejected {
-    @apply bg-red-500/10 text-red-600 border border-red-500/30 text-xs px-2.5 py-1 rounded-full font-semibold;
+    @apply bg-red-500/10 text-red-400 border border-red-500/30 text-xs px-3 py-1 rounded-full font-medium shadow-[0_0_10px_rgba(239,68,68,0.2)];
   }
 
   .live-dot {
-    @apply w-2 h-2 rounded-full bg-jamia-emerald animate-pulse;
+    @apply w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)];
   }
 }

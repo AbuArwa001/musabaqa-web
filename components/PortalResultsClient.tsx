@@ -45,14 +45,14 @@ export default function PortalResultsClient({
   return (
     <div>
       <div className={`mb-6 ${isAr ? 'text-right' : ''}`}>
-        <h2 className="text-2xl font-bold text-jamia-dark">{t.results_title}</h2>
-        <p className="text-jamia-dark/60 text-sm mt-1">{t.results_subtitle}</p>
+        <h2 className="text-2xl font-bold text-white">{t.results_title}</h2>
+        <p className="text-stone-400 text-sm mt-1">{t.results_subtitle}</p>
       </div>
 
       {!hasAnyResults && (
         <div className="card text-center py-16">
           <p className="text-4xl mb-4">📊</p>
-          <p className="text-jamia-dark/60">{t.no_results}</p>
+          <p className="text-stone-400">{t.no_results}</p>
         </div>
       )}
 
@@ -68,14 +68,14 @@ export default function PortalResultsClient({
             <div key={student.id} className="card">
               <div className={`flex items-center justify-between mb-4 ${isAr ? 'flex-row-reverse' : ''}`}>
                 <div className={isAr ? 'text-right' : ''}>
-                  <h3 className="font-semibold text-jamia-dark text-lg">{student.full_name}</h3>
-                  <p className="text-jamia-dark/60 text-sm">
+                  <h3 className="font-semibold text-white text-lg">{student.full_name}</h3>
+                  <p className="text-stone-400 text-sm">
                     {cat ? (isAr ? cat.name_ar : cat.name_en) : '—'}
                   </p>
                 </div>
                 <div className={`text-center ${isAr ? 'text-left' : 'text-right'}`}>
                   <p className="text-3xl font-bold text-jamia-gold">{best.final_score.toFixed(1)}</p>
-                  <p className="text-xs text-jamia-dark/50">{t.score_label}</p>
+                  <p className="text-xs text-white/50">{t.score_label}</p>
                 </div>
               </div>
 
@@ -84,7 +84,7 @@ export default function PortalResultsClient({
                   <span className="text-2xl">
                     {best.rank === 1 ? '🥇' : best.rank === 2 ? '🥈' : best.rank === 3 ? '🥉' : `#${best.rank}`}
                   </span>
-                  <span className="text-jamia-dark/70 text-sm">{t.rank_label} {best.rank}</span>
+                  <span className="text-white/70 text-sm">{t.rank_label} {best.rank}</span>
                   {best.consistency_flagged && (
                     <span className="text-jamia-gold text-xs">⚠ {dict.leaderboard.flagged}</span>
                   )}
@@ -93,12 +93,12 @@ export default function PortalResultsClient({
 
               {results.length > 1 && (
                 <div className="mt-4 border-t border-jamia-dark/10 pt-4">
-                  <p className="text-xs text-jamia-dark/40 mb-2 uppercase tracking-wider">All Rounds</p>
+                  <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">All Rounds</p>
                   <div className="flex gap-3 flex-wrap">
                     {results.map((r) => (
                       <div key={r.id} className="bg-white border border-jamia-dark/10 rounded-lg px-3 py-2 text-center">
                         <p className="text-sm font-semibold text-jamia-gold">{r.final_score.toFixed(1)}</p>
-                        <p className="text-xs text-jamia-dark/50">Round {r.round_id}</p>
+                        <p className="text-xs text-white/50">Round {r.round_id}</p>
                       </div>
                     ))}
                   </div>

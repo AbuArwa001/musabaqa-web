@@ -13,12 +13,12 @@ export default async function NotificationsPage(props: PageProps<'/[lang]/portal
   return (
     <div>
       <div className={`mb-6 ${isAr ? 'text-right' : ''}`}>
-        <h2 className="text-2xl font-bold text-jamia-dark">{t.notifications_title}</h2>
+        <h2 className="text-2xl font-bold text-white">{t.notifications_title}</h2>
       </div>
 
       <div className="card text-center py-16">
         <p className="text-4xl mb-4">🔔</p>
-        <p className="text-jamia-dark/60">{t.notifications_empty}</p>
+        <p className="text-stone-400">{t.notifications_empty}</p>
       </div>
     </div>
   )

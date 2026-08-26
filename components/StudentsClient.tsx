@@ -154,8 +154,8 @@ export default function StudentsClient({
       {/* Header row */}
       <div className={`flex items-center justify-between mb-6 ${isAr ? 'flex-row-reverse' : ''}`}>
         <div className={isAr ? 'text-right' : ''}>
-          <h2 className="text-2xl font-bold text-jamia-dark">{t.students_title}</h2>
-          <p className="text-jamia-dark/60 text-sm mt-1">{t.students_subtitle}</p>
+          <h2 className="text-2xl font-bold text-white">{t.students_title}</h2>
+          <p className="text-stone-400 text-sm mt-1">{t.students_subtitle}</p>
         </div>
         {!atCapacity && (
           <button onClick={openAddForm} className="btn-primary flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function StudentsClient({
           </button>
         )}
         {atCapacity && (
-          <span className="text-sm text-jamia-dark/50 border border-jamia-dark/10 rounded-lg px-4 py-2">
+          <span className="text-sm text-stone-400 border border-white/10 rounded-lg px-4 py-2">
             {t.student_limit_reached}
           </span>
         )}
@@ -174,7 +174,7 @@ export default function StudentsClient({
       {students.length === 0 && !showForm && (
         <div className="card text-center py-16">
           <p className="text-4xl mb-4">👤</p>
-          <p className="text-jamia-dark/60">{t.no_students}</p>
+          <p className="text-stone-400">{t.no_students}</p>
           <button onClick={openAddForm} className="btn-primary mt-6 inline-flex items-center gap-2">
             <span>+</span> {t.add_student}
           </button>
@@ -185,21 +185,21 @@ export default function StudentsClient({
         {students.map((student) => {
           const cat = categories.find((c) => c.id === student.category_id)
           return (
-            <div key={student.id} className="card hover:border-jamia-dark/20 transition-colors">
+            <div key={student.id} className="card hover:border-amber-500/30 transition-colors">
               <div className={`flex items-start justify-between gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
                 <div className={`flex-1 ${isAr ? 'text-right' : ''}`}>
                   <div className={`flex items-center gap-2 mb-1 ${isAr ? 'flex-row-reverse' : ''}`}>
-                    <h3 className="font-semibold text-jamia-dark text-lg">{student.full_name}</h3>
+                    <h3 className="font-semibold text-white text-lg">{student.full_name}</h3>
                     {student.is_backup && (
                       <span className="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full px-2 py-0.5">
                         {t.backup_badge}
                       </span>
                     )}
                   </div>
-                  <p className="text-jamia-dark/60 text-sm">
+                  <p className="text-stone-300 text-sm">
                     {cat ? (isAr ? cat.name_ar : cat.name_en) : '—'}
                   </p>
-                  <p className="text-jamia-dark/40 text-xs mt-1">DOB: {student.dob}</p>
+                  <p className="text-stone-500 text-xs mt-1">DOB: {student.dob}</p>
                 </div>
                 <div className={`flex flex-col items-end gap-2 ${isAr ? 'items-start' : ''}`}>
                   {statusBadge(student.review_status, dict)}
@@ -212,7 +212,7 @@ export default function StudentsClient({
                 </div>
               </div>
               {student.rejection_reason && (
-                <p className="text-xs text-red-600 mt-3 border-t border-jamia-dark/10 pt-3">
+                <p className="text-xs text-red-400 mt-3 border-t border-white/10 pt-3">
                   {t.rejection_reason}: {student.rejection_reason}
                 </p>
               )}
@@ -231,8 +231,8 @@ export default function StudentsClient({
                 key={cat.id}
                 className={`text-xs px-3 py-1.5 rounded-full border ${
                   filled
-                    ? 'bg-white border-jamia-dark/10 text-jamia-dark/40'
-                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                    ? 'bg-white/5 border-white/10 text-stone-400'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
                 }`}
               >
                 {isAr ? cat.name_ar : cat.name_en}
@@ -245,15 +245,15 @@ export default function StudentsClient({
 
       {/* Inline Add/Edit Form */}
       {showForm && (
-        <div className="card border-jamia-gold/30 bg-jamia-gold/5">
-          <h3 className={`text-lg font-bold text-jamia-dark mb-5 ${isAr ? 'text-right' : ''}`}>
+        <div className="card mt-8 border-amber-500/30 bg-amber-900/10 shadow-[0_0_30px_rgba(201,147,53,0.1)]">
+          <h3 className={`text-xl font-bold text-white mb-6 ${isAr ? 'text-right' : ''}`}>
             {editingId ? tf.edit_title : tf.add_title}
           </h3>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             {/* Full name — accepts Arabic */}
             <div>
               <label className="label">{tf.full_name}</label>
-              <p className="text-xs text-jamia-dark/50 mb-1">{tf.full_name_hint}</p>
+              <p className="text-xs text-stone-400 mb-2">{tf.full_name_hint}</p>
               <input
                 {...register('full_name')}
                 className={inputClass}
@@ -321,7 +321,7 @@ export default function StudentsClient({
                 id="is_backup"
                 className="w-4 h-4 rounded accent-amber-400"
               />
-              <label htmlFor="is_backup" className="text-sm text-jamia-dark/80 cursor-pointer">
+              <label htmlFor="is_backup" className="text-sm text-stone-300 cursor-pointer">
                 {tf.is_backup}
               </label>
             </div>
