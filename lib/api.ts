@@ -187,6 +187,10 @@ export async function getStudent(token: string, id: number): Promise<StudentRead
   return request(`/api/v1/students/${id}`, {}, token)
 }
 
+export function getStudentPdfUrl(id: number): string {
+  return `${API_URL}/api/v1/students/${id}/download_pdf/`
+}
+
 // ─── Results ──────────────────────────────────────────────────────────────────
 
 export interface RoundResult {

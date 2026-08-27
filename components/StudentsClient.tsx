@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createStudent, updateStudent, ApiError } from '@/lib/api'
+import { createStudent, updateStudent, getStudentPdfUrl, ApiError } from '@/lib/api'
 import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
@@ -203,12 +203,44 @@ export default function StudentsClient({
                 </div>
                 <div className={`flex flex-col items-end gap-2 ${isAr ? 'items-start' : ''}`}>
                   {statusBadge(student.review_status, dict)}
-                  <button
-                    onClick={() => openEditForm(student)}
-                    className="text-xs text-jamia-gold hover:text-jamia-gold-hover transition-colors"
-                  >
-                    {t.edit_student}
-                  </button>
+                  <div className="flex items-center gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(getStudentPdfUrl(student.id), {
+                            headers: token ? { Authorization: `Bearer ${token}` } : {}
+                          })
+                          if (res.ok) {
+                            const blob = await res.blob()
+                            const url = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url
+                            a.download = `REF_${String(student.id).padStart(5, '0')}_${student.full_name.replace(/\s+/g, '_')}_Dossier.pdf`
+                            document.body.appendChild(a)
+                            a.click()
+                            document.body.removeChild(a)
+                            URL.revokeObjectURL(url)
+                          } else {
+                            alert(isAr ? 'فشل تحميل ملف المرشح' : 'Failed to download candidate dossier PDF')
+                          }
+                        } catch (e) {
+                          console.error(e)
+                          alert(isAr ? 'حدث خطأ أثناء تحميل الملف' : 'An error occurred downloading dossier')
+                        }
+                      }}
+                      className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5 bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/30 px-2.5 py-1 rounded-lg cursor-pointer"
+                    >
+                      <span>📄</span>
+                      <span>{isAr ? 'تحميل الملف' : 'Download Dossier'}</span>
+                    </button>
+                    <button
+                      onClick={() => openEditForm(student)}
+                      className="text-xs text-jamia-gold hover:text-jamia-gold-hover transition-colors px-2 py-1 cursor-pointer"
+                    >
+                      {t.edit_student}
+                    </button>
+                  </div>
                 </div>
               </div>
               {student.rejection_reason && (
