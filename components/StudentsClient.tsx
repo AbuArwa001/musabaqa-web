@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createStudent, updateStudent, getStudentPdfUrl, uploadInstitutionMedia, ApiError } from '@/lib/api'
+import { createStudent, updateStudent, getStudentPdfUrl, ApiError } from '@/lib/api'
 import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
@@ -97,45 +98,9 @@ export default function StudentsClient({
   const [institution, setInstitution] = useState<Institution | null>(initialInst)
   const [students, setStudents] = useState<Student[]>(initialStudents)
   const [showForm, setShowForm] = useState(false)
-  const [showMediaHub, setShowMediaHub] = useState(false)
-  const [uploadingType, setUploadingType] = useState<string | null>(null)
   const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null)
-  const [mediaMsg, setMediaMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [serverError, setServerError] = useState('')
-
-  const handleMediaUpload = async (mediaType: 'document' | 'teacher' | 'classroom' | 'students' | 'video', e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0] || !institution) return
-    const file = e.target.files[0]
-    setUploadingType(mediaType)
-    setMediaMsg(null)
-
-    try {
-      const res = await uploadInstitutionMedia(institution.id, mediaType, file)
-      setInstitution((prev) => {
-        if (!prev) return prev
-        const fieldMap: Record<string, keyof Institution> = {
-          document: 'document_url',
-          teacher: 'teacher_photo_url',
-          classroom: 'classroom_photo_url',
-          students: 'students_photo_url',
-          video: 'video_url',
-        }
-        return { ...prev, [fieldMap[mediaType]]: res.url }
-      })
-      setMediaMsg({
-        type: 'success',
-        text: isAr ? 'تم رفع الملف وحفظه بنجاح في السحابة' : 'File uploaded successfully and saved to AWS S3.',
-      })
-    } catch (err: any) {
-      setMediaMsg({
-        type: 'error',
-        text: err.message || (isAr ? 'فشل رفع الملف' : 'Failed to upload file.'),
-      })
-    } finally {
-      setUploadingType(null)
-    }
-  }
 
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } =
     useForm<StudentFormData>({ resolver: zodResolver(studentSchema) })
@@ -516,17 +481,13 @@ export default function StudentsClient({
                         : 'Student nomination will unlock immediately once your institution dossier is reviewed and approved by the Jamia Mosque Committee. Please upload your teacher, classroom, and video media above.')}
                 </p>
                 <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMediaHub(true)
-                      window.scrollTo({ top: 0, behavior: 'smooth' })
-                    }}
-                    className="inline-flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-5 py-2.5 rounded-xl shadow-sm transition-all cursor-pointer"
+                  <Link
+                    href={`/${lang}/portal/verification`}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-5 py-2.5 rounded-xl shadow-sm transition-all"
                   >
-                    <span>📁</span>
-                    <span>{isAr ? 'فتح ملف التوثيق لرفع الوسائط ↗' : 'Complete Verification Dossier Above ↗'}</span>
-                  </button>
+                    <span>🛡️</span>
+                    <span>{isAr ? 'الانتقال لصفحة التوثيق والاعتماد ↗' : 'Go to Accreditation & Verification Page ↗'}</span>
+                  </Link>
                 </div>
               </div>
             </div>

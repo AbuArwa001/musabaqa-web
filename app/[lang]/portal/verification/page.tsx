@@ -7,15 +7,15 @@ import VerificationClient from '@/components/VerificationClient'
 
 export const dynamic = 'force-dynamic'
 
-export async function generateMetadata(props: PageProps<'/[lang]/portal/verification'>): Promise<Metadata> {
-  const { lang } = await props.params
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
   return {
     title: lang === 'ar' ? 'ملف التوثيق والاعتماد | مسابقة مسجد جامع نيروبي' : 'Accreditation & Media Dossier | Jamia Mosque Musabaqa',
   }
 }
 
-export default async function VerificationPage(props: PageProps<'/[lang]/portal/verification'>) {
-  const { lang } = await props.params
+export default async function VerificationPage({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params
   if (!isValidLocale(lang)) notFound()
 
   const store = await cookies()
