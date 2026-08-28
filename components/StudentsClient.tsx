@@ -52,9 +52,9 @@ type StudentFormData = z.infer<typeof studentSchema>
 function statusBadge(status: ReviewStatus, dict: Dict) {
   const t = dict.portal
   const map = {
-    PENDING_REVIEW: { label: t.student_status_pending, cls: 'badge-pending' },
-    APPROVED: { label: t.student_status_approved, cls: 'badge-approved' },
-    REJECTED: { label: t.student_status_rejected, cls: 'badge-rejected' },
+    PENDING_REVIEW: { label: t.student_status_pending, cls: 'admin-badge-pending' },
+    APPROVED:       { label: t.student_status_approved, cls: 'admin-badge-approved' },
+    REJECTED:       { label: t.student_status_rejected, cls: 'admin-badge-rejected' },
   }
   const { label, cls } = map[status]
   return <span className={cls}>{label}</span>
@@ -89,7 +89,6 @@ export default function StudentsClient({
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } =
     useForm<StudentFormData>({ resolver: zodResolver(studentSchema) })
 
-  // Which categories already have a non-deleted student
   const filledCategoryIds = new Set(students.map((s) => s.category_id))
   const atCapacity = students.length >= 4
 
@@ -98,6 +97,8 @@ export default function StudentsClient({
     setEditingId(null)
     setShowForm(true)
     setServerError('')
+    // Smooth scroll to form
+    setTimeout(() => document.getElementById('student-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
   function openEditForm(student: Student) {
@@ -113,6 +114,7 @@ export default function StudentsClient({
     setEditingId(student.id)
     setShowForm(true)
     setServerError('')
+    setTimeout(() => document.getElementById('student-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
   async function onSubmit(data: StudentFormData) {
@@ -147,63 +149,112 @@ export default function StudentsClient({
     }
   }
 
-  const inputClass = `input-field ${isAr ? 'text-right' : ''}`
+  const inputClass = `admin-input ${isAr ? 'text-right' : ''}`
+  const selectClass = `admin-select ${isAr ? 'text-right' : ''}`
 
   return (
-    <div>
-      {/* Header row */}
-      <div className={`flex items-center justify-between mb-6 ${isAr ? 'flex-row-reverse' : ''}`}>
+    <div className="space-y-6">
+
+      {/* ── Page Header ── */}
+      <div className={`flex items-center justify-between ${isAr ? 'flex-row-reverse' : ''}`}>
         <div className={isAr ? 'text-right' : ''}>
-          <h2 className="text-2xl font-bold text-white">{t.students_title}</h2>
-          <p className="text-stone-400 text-sm mt-1">{t.students_subtitle}</p>
+          <h1 className="font-serif text-2xl font-bold text-gray-900">{t.students_title}</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{t.students_subtitle}</p>
         </div>
         {!atCapacity && (
-          <button onClick={openAddForm} className="btn-primary flex items-center gap-2">
-            <span>+</span>
-            <span>{t.add_student}</span>
+          <button
+            onClick={openAddForm}
+            className="portal-btn-primary"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            {t.add_student}
           </button>
         )}
         {atCapacity && (
-          <span className="text-sm text-stone-400 border border-white/10 rounded-lg px-4 py-2">
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
+            <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             {t.student_limit_reached}
           </span>
         )}
       </div>
 
-      {/* Student grid */}
+      {/* ── Category availability pills ── */}
+      {categories.length > 0 && (
+        <div className={`flex flex-wrap gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
+          {categories.map((cat) => {
+            const filled = filledCategoryIds.has(cat.id)
+            return (
+              <span
+                key={cat.id}
+                className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium ${
+                  filled
+                    ? 'bg-gray-50 border-gray-200 text-gray-400'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${filled ? 'bg-gray-300' : 'bg-emerald-400'}`} />
+                {isAr ? cat.name_ar : cat.name_en}
+                {filled && ` — ${t.category_slot_filled}`}
+              </span>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ── Empty state ── */}
       {students.length === 0 && !showForm && (
-        <div className="card text-center py-16">
-          <p className="text-4xl mb-4">👤</p>
-          <p className="text-stone-400">{t.no_students}</p>
-          <button onClick={openAddForm} className="btn-primary mt-6 inline-flex items-center gap-2">
-            <span>+</span> {t.add_student}
+        <div className="admin-card text-center py-20">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <p className="text-gray-900 font-semibold mb-1">{t.no_students}</p>
+          <p className="text-gray-400 text-sm mb-6">Add your first student to get started.</p>
+          <button onClick={openAddForm} className="portal-btn-primary">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            {t.add_student}
           </button>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      {/* ── Student Cards Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {students.map((student) => {
           const cat = categories.find((c) => c.id === student.category_id)
           return (
-            <div key={student.id} className="card hover:border-amber-500/30 transition-colors">
-              <div className={`flex items-start justify-between gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
-                <div className={`flex-1 ${isAr ? 'text-right' : ''}`}>
-                  <div className={`flex items-center gap-2 mb-1 ${isAr ? 'flex-row-reverse' : ''}`}>
-                    <h3 className="font-semibold text-white text-lg">{student.full_name}</h3>
+            <div
+              key={student.id}
+              className="admin-card hover:border-[#006838]/30 hover:shadow-md transition-all duration-200"
+            >
+              <div className={`flex items-start gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
+                  {student.full_name.charAt(0).toUpperCase()}
+                </div>
+
+                <div className={`flex-1 min-w-0 ${isAr ? 'text-right' : ''}`}>
+                  <div className={`flex items-center gap-2 mb-1 flex-wrap ${isAr ? 'flex-row-reverse' : ''}`}>
+                    <h3 className="font-semibold text-gray-900 text-base leading-tight">{student.full_name}</h3>
                     {student.is_backup && (
-                      <span className="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full px-2 py-0.5">
+                      <span className="text-[10px] bg-sky-50 text-sky-700 border border-sky-200 rounded-full px-2 py-0.5 font-semibold">
                         {t.backup_badge}
                       </span>
                     )}
                   </div>
-                  <p className="text-stone-300 text-sm">
-                    {cat ? (isAr ? cat.name_ar : cat.name_en) : '—'}
-                  </p>
-                  <p className="text-stone-500 text-xs mt-1">DOB: {student.dob}</p>
+                  <p className="text-gray-500 text-sm">{cat ? (isAr ? cat.name_ar : cat.name_en) : '—'}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">DOB: {student.dob}</p>
                 </div>
-                <div className={`flex flex-col items-end gap-2 ${isAr ? 'items-start' : ''}`}>
+
+                <div className={`flex flex-col items-end gap-2 flex-shrink-0 ${isAr ? 'items-start' : ''}`}>
                   {statusBadge(student.review_status, dict)}
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className={`flex items-center gap-1.5 ${isAr ? 'flex-row-reverse' : ''}`}>
                     <button
                       type="button"
                       onClick={async () => {
@@ -229,149 +280,137 @@ export default function StudentsClient({
                           alert(isAr ? 'حدث خطأ أثناء تحميل الملف' : 'An error occurred downloading dossier')
                         }
                       }}
-                      className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5 bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/30 px-2.5 py-1 rounded-lg cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                     >
-                      <span>📄</span>
-                      <span>{isAr ? 'تحميل الملف' : 'Download Dossier'}</span>
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      PDF
                     </button>
                     <button
                       onClick={() => openEditForm(student)}
-                      className="text-xs text-jamia-gold hover:text-jamia-gold-hover transition-colors px-2 py-1 cursor-pointer"
+                      className="text-[11px] text-[#006838] hover:text-[#004d29] font-semibold px-2 py-1 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
                     >
                       {t.edit_student}
                     </button>
                   </div>
                 </div>
               </div>
+
               {student.rejection_reason && (
-                <p className="text-xs text-red-400 mt-3 border-t border-white/10 pt-3">
-                  {t.rejection_reason}: {student.rejection_reason}
-                </p>
+                <div className="mt-3 pt-3 border-t border-red-100">
+                  <p className="text-xs text-red-600 font-medium">
+                    <span className="font-bold">{t.rejection_reason}:</span> {student.rejection_reason}
+                  </p>
+                </div>
               )}
             </div>
           )
         })}
       </div>
 
-      {/* Category availability legend */}
-      {categories.length > 0 && (
-        <div className={`flex flex-wrap gap-2 mb-8 ${isAr ? 'flex-row-reverse' : ''}`}>
-          {categories.map((cat) => {
-            const filled = filledCategoryIds.has(cat.id)
-            return (
-              <span
-                key={cat.id}
-                className={`text-xs px-3 py-1.5 rounded-full border ${
-                  filled
-                    ? 'bg-white/5 border-white/10 text-stone-400'
-                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
-                }`}
-              >
-                {isAr ? cat.name_ar : cat.name_en}
-                {filled && ` — ${t.category_slot_filled}`}
-              </span>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Inline Add/Edit Form */}
+      {/* ── Add/Edit Form ── */}
       {showForm && (
-        <div className="card mt-8 border-amber-500/30 bg-amber-900/10 shadow-[0_0_30px_rgba(201,147,53,0.1)]">
-          <h3 className={`text-xl font-bold text-white mb-6 ${isAr ? 'text-right' : ''}`}>
-            {editingId ? tf.edit_title : tf.add_title}
-          </h3>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-            {/* Full name — accepts Arabic */}
-            <div>
-              <label className="label">{tf.full_name}</label>
-              <p className="text-xs text-stone-400 mb-2">{tf.full_name_hint}</p>
-              <input
-                {...register('full_name')}
-                className={inputClass}
-                placeholder={isAr ? 'أحمد محمد عبدالله' : 'Ahmad Mohamed'}
-                // No dir override — accept both scripts
-              />
-              {errors.full_name && <p className="error-text">{tf.errors.name_required}</p>}
+        <div id="student-form" className="admin-card border-[#006838]/30 shadow-md mt-2">
+          <div className="admin-card-header">
+            <h3 className={`font-serif text-lg font-bold text-gray-900 flex items-center gap-2 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
+              <span className="w-1.5 h-5 bg-[#006838] rounded-full" />
+              {editingId ? tf.edit_title : tf.add_title}
+            </h3>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Full name */}
+              <div className="sm:col-span-2">
+                <label className="admin-label">{tf.full_name}</label>
+                <p className="text-[11px] text-gray-400 mb-1.5">{tf.full_name_hint}</p>
+                <input
+                  {...register('full_name')}
+                  className={inputClass}
+                  placeholder={isAr ? 'أحمد محمد عبدالله' : 'Ahmad Mohamed'}
+                />
+                {errors.full_name && <p className="admin-error">{tf.errors.name_required}</p>}
+              </div>
+
+              {/* DOB */}
+              <div>
+                <label className="admin-label">{tf.dob}</label>
+                <input {...register('dob')} type="date" className={inputClass} dir="ltr" />
+                {errors.dob && <p className="admin-error">{tf.errors.dob_required}</p>}
+              </div>
+
+              {/* Gender */}
+              <div>
+                <label className="admin-label">{tf.gender}</label>
+                <select {...register('gender')} className={selectClass}>
+                  <option value="">{tf.gender}</option>
+                  <option value="MALE">{tf.gender_male}</option>
+                  <option value="FEMALE">{tf.gender_female}</option>
+                </select>
+                {errors.gender && <p className="admin-error">{tf.errors.gender_required}</p>}
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="admin-label">{tf.category}</label>
+                <select {...register('category_id')} className={selectClass}>
+                  <option value="">{tf.select_category}</option>
+                  {categories.map((cat) => {
+                    const alreadyFilled = filledCategoryIds.has(cat.id) &&
+                      cat.id !== students.find((s) => s.id === editingId)?.category_id
+                    return (
+                      <option key={cat.id} value={cat.id} disabled={alreadyFilled}>
+                        {isAr ? cat.name_ar : cat.name_en}
+                        {alreadyFilled ? ` (${t.category_slot_filled})` : ''}
+                      </option>
+                    )
+                  })}
+                </select>
+                {errors.category_id && <p className="admin-error">{tf.errors.category_required}</p>}
+              </div>
+
+              {/* National ID */}
+              <div>
+                <label className="admin-label">National ID / Birth Cert No.</label>
+                <input {...register('national_id')} className={inputClass} dir="ltr" />
+              </div>
+
+              {/* Guardian phone */}
+              <div>
+                <label className="admin-label">{tf.guardian_phone}</label>
+                <input {...register('guardian_phone')} type="tel" className={inputClass} dir="ltr" placeholder="+254..." />
+                {errors.guardian_phone && <p className="admin-error">{tf.errors.phone_required}</p>}
+              </div>
             </div>
 
-            {/* DOB */}
-            <div>
-              <label className="label">{tf.dob}</label>
-              <input {...register('dob')} type="date" className={inputClass} dir="ltr" />
-              {errors.dob && <p className="error-text">{tf.errors.dob_required}</p>}
-            </div>
-
-            {/* Gender */}
-            <div>
-              <label className="label">{tf.gender}</label>
-              <select {...register('gender')} className={inputClass}>
-                <option value="">{tf.gender}</option>
-                <option value="MALE">{tf.gender_male}</option>
-                <option value="FEMALE">{tf.gender_female}</option>
-              </select>
-              {errors.gender && <p className="error-text">{tf.errors.gender_required}</p>}
-            </div>
-
-            {/* Category */}
-            <div>
-              <label className="label">{tf.category}</label>
-              <select {...register('category_id')} className={inputClass}>
-                <option value="">{tf.select_category}</option>
-                {categories.map((cat) => {
-                  const alreadyFilled = filledCategoryIds.has(cat.id) &&
-                    cat.id !== students.find((s) => s.id === editingId)?.category_id
-                  return (
-                    <option key={cat.id} value={cat.id} disabled={alreadyFilled}>
-                      {isAr ? cat.name_ar : cat.name_en}
-                      {alreadyFilled ? ` (${t.category_slot_filled})` : ''}
-                    </option>
-                  )
-                })}
-              </select>
-              {errors.category_id && <p className="error-text">{tf.errors.category_required}</p>}
-            </div>
-
-            {/* National ID */}
-            <div>
-              <label className="label">National ID / Birth Cert No.</label>
-              <input {...register('national_id')} className={inputClass} dir="ltr" />
-            </div>
-
-            {/* Guardian phone */}
-            <div>
-              <label className="label">{tf.guardian_phone}</label>
-              <input {...register('guardian_phone')} type="tel" className={inputClass} dir="ltr" placeholder="+254..." />
-              {errors.guardian_phone && <p className="error-text">{tf.errors.phone_required}</p>}
-            </div>
-
-            {/* Backup */}
+            {/* Backup checkbox */}
             <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
               <input
                 {...register('is_backup')}
                 type="checkbox"
                 id="is_backup"
-                className="w-4 h-4 rounded accent-amber-400"
+                className="w-4 h-4 rounded accent-[#006838]"
               />
-              <label htmlFor="is_backup" className="text-sm text-stone-300 cursor-pointer">
+              <label htmlFor="is_backup" className="text-sm text-gray-600 cursor-pointer">
                 {tf.is_backup}
               </label>
             </div>
 
             {serverError && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-red-600 text-sm">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
                 {serverError}
               </div>
             )}
 
-            <div className={`flex gap-3 pt-2 ${isAr ? 'flex-row-reverse' : ''}`}>
-              <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">
+            <div className={`flex gap-3 pt-2 border-t border-gray-100 ${isAr ? 'flex-row-reverse' : ''}`}>
+              <button type="submit" disabled={isSubmitting} className="portal-btn-primary flex-1">
                 {isSubmitting ? tf.submitting : tf.submit}
               </button>
               <button
                 type="button"
                 onClick={() => { setShowForm(false); setServerError('') }}
-                className="btn-secondary"
+                className="portal-btn-secondary"
               >
                 {tf.cancel}
               </button>
