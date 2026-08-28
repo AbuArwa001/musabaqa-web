@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { isValidLocale, getDictionary } from '@/lib/dictionaries'
-import { listRegions } from '@/lib/api'
+import { listCounties, listRegions, type County, type Region } from '@/lib/api'
 import RegisterForm from '@/components/RegisterForm'
 
 export async function generateMetadata(props: PageProps<'/[lang]/register'>): Promise<Metadata> {
@@ -20,10 +20,10 @@ export default async function RegisterPage(props: PageProps<'/[lang]/register'>)
 
   const dict = await getDictionary(lang)
 
-  let regions: Array<{ id: number; name_en: string; name_ar: string }> = []
-  try {
-    regions = await listRegions()
-  } catch {}
+  const [counties, regions] = await Promise.all([
+    listCounties().catch(() => [] as County[]),
+    listRegions().catch(() => [] as Region[]),
+  ])
 
   const isAr = lang === 'ar'
 
@@ -55,7 +55,7 @@ export default async function RegisterPage(props: PageProps<'/[lang]/register'>)
           <p className="text-stone-400">{dict.register.subtitle}</p>
         </div>
 
-        <RegisterForm dict={dict} regions={regions} lang={lang} />
+        <RegisterForm dict={dict} counties={counties} regions={regions} lang={lang} />
       </div>
     </div>
   )

@@ -77,7 +77,8 @@ export interface InstitutionCreate {
   phone: string
   email: string
   password: string
-  region_id: number
+  county_id?: number
+  region_id?: number
   preferred_language: 'EN' | 'AR'
 }
 
@@ -88,6 +89,7 @@ export interface InstitutionRead {
   contact_person: string
   phone: string
   email: string
+  county_id: number | null
   region_id: number | null
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   rejection_reason: string | null
@@ -106,17 +108,29 @@ export async function getMyInstitution(token: string): Promise<InstitutionRead> 
   return request('/api/v1/institutions/me', {}, token)
 }
 
-// ─── Regions ──────────────────────────────────────────────────────────────────
+// ─── Geography (Counties & Regions) ──────────────────────────────────────────
+
+export interface County {
+  id: number
+  name: string
+  active?: boolean
+}
+
+export async function listCounties(): Promise<County[]> {
+  return request('/api/v1/counties')
+}
 
 export interface Region {
   id: number
   name_en: string
   name_ar: string
   county_id: number
+  active?: boolean
 }
 
-export async function listRegions(): Promise<Region[]> {
-  return request('/api/v1/regions/')
+export async function listRegions(countyId?: number): Promise<Region[]> {
+  const query = countyId ? `?county_id=${countyId}` : ''
+  return request(`/api/v1/regions${query}`)
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────

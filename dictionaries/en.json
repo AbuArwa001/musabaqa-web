@@ -61,15 +61,18 @@
     "email": "Email Address",
     "password": "Password",
     "confirm_password": "Confirm Password",
-    "region": "Region",
+    "county": "County",
+    "select_county": "Select a county…",
+    "region": "Region / Sub-County",
     "select_region": "Select a region…",
+    "select_county_first": "Select a county first…",
     "preferred_language": "Preferred Language",
     "lang_en": "English",
     "lang_ar": "Arabic",
     "submit": "Register Institution",
     "submitting": "Registering…",
     "success_title": "Registration Submitted!",
-    "success_body": "Your institution has been registered. Our team will review your application and notify you by email.",
+    "success_body": "Your institution has been registered. Our team will review and verify your application and notify you by email.",
     "already_registered": "Already registered?",
     "login_link": "Log in here",
     "errors": {
@@ -82,6 +85,7 @@
       "password_required": "Password is required",
       "password_min": "Password must be at least 8 characters",
       "password_mismatch": "Passwords do not match",
+      "county_required": "Please select a county",
       "region_required": "Please select a region",
       "email_taken": "This email is already registered. Try logging in."
     }

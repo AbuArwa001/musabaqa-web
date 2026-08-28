@@ -1,40 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
-import { registerInstitution, ApiError } from '@/lib/api'
+import { registerInstitution, ApiError, type County, type Region } from '@/lib/api'
 import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
 
-const schema = z.object({
-  name: z.string().min(1),
-  type: z.enum(['MADRASA', 'SCHOOL', 'MOSQUE', 'OTHER']),
-  contact_person: z.string().min(1),
-  phone: z.string().min(1),
-  email: z.string().email(),
-  password: z.string().min(8),
-  confirm_password: z.string(),
-  region_id: z.string().min(1),
-  preferred_language: z.enum(['EN', 'AR']),
-}).refine((d) => d.password === d.confirm_password, {
-  message: 'mismatch',
-  path: ['confirm_password'],
-})
+const createSchema = (hasCounties: boolean) =>
+  z.object({
+    name: z.string().min(1),
+    type: z.enum(['MADRASA', 'SCHOOL', 'MOSQUE', 'OTHER']),
+    contact_person: z.string().min(1),
+    phone: z.string().min(1),
+    email: z.string().email(),
+    password: z.string().min(8),
+    confirm_password: z.string(),
+    county_id: hasCounties ? z.string().min(1) : z.string().optional(),
+    region_id: z.string().min(1),
+    preferred_language: z.enum(['EN', 'AR']),
+  }).refine((d) => d.password === d.confirm_password, {
+    message: 'mismatch',
+    path: ['confirm_password'],
+  })
 
-type FormData = z.infer<typeof schema>
-
-interface Region { id: number; name_en: string; name_ar: string }
+type FormData = {
+  name: string
+  type: 'MADRASA' | 'SCHOOL' | 'MOSQUE' | 'OTHER'
+  contact_person: string
+  phone: string
+  email: string
+  password: string
+  confirm_password: string
+  county_id?: string
+  region_id: string
+  preferred_language: 'EN' | 'AR'
+}
 
 export default function RegisterForm({
   dict,
-  regions,
+  counties = [],
+  regions = [],
   lang,
 }: {
   dict: Dict
+  counties?: County[]
   regions: Region[]
   lang: string
 }) {
@@ -44,15 +57,41 @@ export default function RegisterForm({
   const [serverError, setServerError] = useState('')
   const [step, setStep] = useState(1)
 
+  const hasCounties = counties.length > 0
+  const schema = useMemo(() => createSchema(hasCounties), [hasCounties])
+
   const {
     register,
     trigger,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { preferred_language: isAr ? 'AR' : 'EN', type: '', region_id: '' } as any,
+    defaultValues: {
+      preferred_language: isAr ? 'AR' : 'EN',
+      type: '' as any,
+      county_id: '',
+      region_id: '',
+    },
   })
+
+  const selectedCountyId = watch('county_id')
+
+  // Filter regions based on the selected county
+  const filteredRegions = useMemo(() => {
+    if (!hasCounties) return regions
+    if (!selectedCountyId) return []
+    const cid = parseInt(selectedCountyId)
+    return regions.filter((r) => r.county_id === cid)
+  }, [regions, selectedCountyId, hasCounties])
+
+  const handleCountyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value
+    setValue('county_id', val, { shouldValidate: true })
+    setValue('region_id', '', { shouldValidate: false })
+  }
 
   async function onSubmit(data: FormData) {
     setServerError('')
@@ -64,7 +103,8 @@ export default function RegisterForm({
         phone: data.phone,
         email: data.email,
         password: data.password,
-        region_id: parseInt(data.region_id),
+        county_id: data.county_id ? parseInt(data.county_id) : undefined,
+        region_id: data.region_id ? parseInt(data.region_id) : undefined,
         preferred_language: data.preferred_language,
       })
       setSuccess(true)
@@ -135,13 +175,15 @@ export default function RegisterForm({
         <div className={`space-y-6 transition-all duration-500 ${step === 1 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 h-0 overflow-hidden'}`}>
           <div className="text-center mb-8">
             <h3 className="font-serif text-xl font-bold text-white">{t.institution_name} & Details</h3>
-            <p className="text-stone-400 text-sm mt-1">Let's start with your institution's core details.</p>
+            <p className="text-stone-400 text-sm mt-1">Let's start with your institution's core details and location.</p>
           </div>
+
           <div>
             <label className="label">{t.institution_name}</label>
             <input {...register('name')} className={inputClass} placeholder={t.institution_name} />
             {errors.name && <p className="error-text">{t.errors.name_required}</p>}
           </div>
+
           <div>
             <label className="label">{t.institution_type}</label>
             <select {...register('type')} className={inputClass}>
@@ -153,17 +195,57 @@ export default function RegisterForm({
             </select>
             {errors.type && <p className="error-text">{t.errors.type_required}</p>}
           </div>
+
+          {/* County Selector (if available in database) */}
+          {hasCounties && (
+            <div>
+              <label className="label">{t.county || 'County'}</label>
+              <select
+                value={selectedCountyId || ''}
+                onChange={handleCountyChange}
+                className={inputClass}
+              >
+                <option value="" disabled>{t.select_county || 'Select a county…'}</option>
+                {counties.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              {errors.county_id && <p className="error-text">{t.errors.county_required || 'Please select a county'}</p>}
+            </div>
+          )}
+
+          {/* Region Selector (cascades from selected County) */}
           <div>
             <label className="label">{t.region}</label>
-            <select {...register('region_id')} className={inputClass}>
-              <option value="" disabled>{t.select_region}</option>
-              {regions.map((r) => (
-                <option key={r.id} value={r.id}>{isAr ? r.name_ar : r.name_en}</option>
+            <select
+              {...register('region_id')}
+              disabled={hasCounties && !selectedCountyId}
+              className={`${inputClass} ${hasCounties && !selectedCountyId ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <option value="" disabled>
+                {hasCounties && !selectedCountyId
+                  ? (t.select_county_first || 'Select a county first…')
+                  : t.select_region}
+              </option>
+              {filteredRegions.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {isAr ? r.name_ar : r.name_en}
+                </option>
               ))}
             </select>
             {errors.region_id && <p className="error-text">{t.errors.region_required}</p>}
+            {hasCounties && selectedCountyId && filteredRegions.length === 0 && (
+              <p className="text-xs text-amber-400 mt-1">No specific sub-regions listed for this county. All candidates compete under this county.</p>
+            )}
           </div>
-          <button type="button" onClick={() => nextStep(['name', 'type', 'region_id'])} className="btn-primary w-full mt-4">
+
+          <button
+            type="button"
+            onClick={() => nextStep(hasCounties ? ['name', 'type', 'county_id', 'region_id'] : ['name', 'type', 'region_id'])}
+            className="btn-primary w-full mt-4"
+          >
             Next Step
           </button>
         </div>

@@ -35,6 +35,13 @@ interface Category {
 interface Institution {
   id: number
   name: string
+  type?: string
+  contact_person?: string
+  phone?: string
+  email?: string
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED'
+  rejection_reason?: string | null
+  created_at?: string
 }
 
 const studentSchema = z.object({
@@ -154,6 +161,84 @@ export default function StudentsClient({
 
   return (
     <div className="space-y-6">
+
+      {/* ── Institution Verification Banner ── */}
+      {institution && (
+        <div className={`admin-card overflow-hidden border-l-4 ${
+          institution.status === 'APPROVED'
+            ? 'border-l-emerald-500 bg-gradient-to-r from-emerald-50/50 via-white to-white'
+            : institution.status === 'REJECTED'
+            ? 'border-l-rose-500 bg-gradient-to-r from-rose-50/50 via-white to-white'
+            : 'border-l-amber-500 bg-gradient-to-r from-amber-50/60 via-white to-white'
+        }`}>
+          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${isAr ? 'sm:flex-row-reverse text-right' : ''}`}>
+            <div className="flex items-start gap-3.5">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+                institution.status === 'APPROVED'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : institution.status === 'REJECTED'
+                  ? 'bg-rose-100 text-rose-700'
+                  : 'bg-amber-100 text-amber-700'
+              }`}>
+                {institution.status === 'APPROVED' ? (
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                ) : institution.status === 'REJECTED' ? (
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+              </div>
+
+              <div>
+                <div className={`flex items-center gap-2 flex-wrap ${isAr ? 'flex-row-reverse' : ''}`}>
+                  <h3 className="font-serif font-bold text-gray-900 text-base">
+                    {institution.name}
+                  </h3>
+                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                    institution.status === 'APPROVED'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : institution.status === 'REJECTED'
+                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                  }`}>
+                    {institution.status === 'APPROVED'
+                      ? (isAr ? '✓ مؤسسة معتمدة وموثقة' : '✓ Verified & Accredited')
+                      : institution.status === 'REJECTED'
+                      ? (isAr ? '✗ مرفوض' : '✗ Application Rejected')
+                      : (isAr ? '⏳ قيد المراجعة والتحقق' : '⏳ Verification Underway')}
+                  </span>
+                </div>
+
+                <p className="text-gray-600 text-xs mt-1 leading-relaxed max-w-2xl">
+                  {institution.status === 'APPROVED'
+                    ? (isAr
+                        ? 'تم اعتماد مؤسستكم رسميًا للمشاركة في مسابقة حفظ القرآن الكريم ٢٠٢٦ من قبل لجنة مسجد جامع نيروبي.'
+                        : 'Your institution has been officially verified and approved for the Jamia Mosque Musabaqa 2026.')
+                    : institution.status === 'REJECTED'
+                    ? (isAr
+                        ? `تم رفض الطلب: ${institution.rejection_reason || 'بيانات غير مكتملة'}. يرجى التواصل مع إدارة المسجد.`
+                        : `Application not approved: ${institution.rejection_reason || 'Incomplete details'}. Contact the Jamia Mosque Committee for assistance.`)
+                    : (isAr
+                        ? 'تقوم لجنة مسجد جامع بمراجعة بيانات المؤسسة والتحقق منها. يمكنك تسجيل طلابك وتجهيز ملفاتهم في هذه الأثناء.'
+                        : 'The Jamia Mosque Committee is currently reviewing and verifying your institution profile. You can register your student candidates in the meantime.')}
+                </p>
+              </div>
+            </div>
+
+            <div className={`flex items-center gap-2 shrink-0 ${isAr ? 'flex-row-reverse' : ''}`}>
+              <span className="text-[11px] font-mono text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
+                REF: INST-{String(institution.id).padStart(4, '0')}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Page Header ── */}
       <div className={`flex items-center justify-between ${isAr ? 'flex-row-reverse' : ''}`}>
