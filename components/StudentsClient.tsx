@@ -114,8 +114,7 @@ export default function StudentsClient({
 
   function openAddFormForCategory(catId?: number) {
     if (!isApproved) {
-      setShowMediaHub(true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.location.href = `/${lang}/portal/verification`
       return
     }
     reset({
