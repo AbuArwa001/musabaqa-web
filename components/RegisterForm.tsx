@@ -10,35 +10,23 @@ import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
 
-const createSchema = (hasCounties: boolean) =>
-  z.object({
-    name: z.string().min(1),
-    type: z.enum(['MADRASA', 'SCHOOL', 'MOSQUE', 'OTHER']),
-    contact_person: z.string().min(1),
-    phone: z.string().min(1),
-    email: z.string().email(),
-    password: z.string().min(8),
-    confirm_password: z.string(),
-    county_id: hasCounties ? z.string().min(1) : z.string().optional(),
-    region_id: z.string().min(1),
-    preferred_language: z.enum(['EN', 'AR']),
-  }).refine((d) => d.password === d.confirm_password, {
-    message: 'mismatch',
-    path: ['confirm_password'],
-  })
+const schema = z.object({
+  name: z.string().min(1),
+  type: z.enum(['MADRASA', 'SCHOOL', 'MOSQUE', 'OTHER']),
+  contact_person: z.string().min(1),
+  phone: z.string().min(1),
+  email: z.string().email(),
+  password: z.string().min(8),
+  confirm_password: z.string(),
+  county_id: z.string().optional(),
+  region_id: z.string().min(1),
+  preferred_language: z.enum(['EN', 'AR']),
+}).refine((d) => d.password === d.confirm_password, {
+  message: 'mismatch',
+  path: ['confirm_password'],
+})
 
-type FormData = {
-  name: string
-  type: 'MADRASA' | 'SCHOOL' | 'MOSQUE' | 'OTHER'
-  contact_person: string
-  phone: string
-  email: string
-  password: string
-  confirm_password: string
-  county_id?: string
-  region_id: string
-  preferred_language: 'EN' | 'AR'
-}
+type FormData = z.infer<typeof schema>
 
 export default function RegisterForm({
   dict,
@@ -58,7 +46,6 @@ export default function RegisterForm({
   const [step, setStep] = useState(1)
 
   const hasCounties = counties.length > 0
-  const schema = useMemo(() => createSchema(hasCounties), [hasCounties])
 
   const {
     register,
