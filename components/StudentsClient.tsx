@@ -122,6 +122,7 @@ export default function StudentsClient({
   const [editingId, setEditingId] = useState<number | null>(null)
   const [serverError, setServerError] = useState('')
   const [formUploadStatus, setFormUploadStatus] = useState<string | null>(null)
+  const [docErrors, setDocErrors] = useState<{ photo?: string; idDoc?: string }>({})
 
   // Document verification file states for the active form
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -162,6 +163,7 @@ export default function StudentsClient({
     setPhotoPreview(null)
     setIdDocFile(null)
     setIdDocPreview(null)
+    setDocErrors({})
     setEditingId(null)
     setShowForm(true)
     setServerError('')
@@ -188,6 +190,7 @@ export default function StudentsClient({
     setPhotoPreview(student.photo || null)
     setIdDocFile(null)
     setIdDocPreview(student.id_document || null)
+    setDocErrors({})
     setEditingId(student.id)
     setShowForm(true)
     setServerError('')
@@ -200,6 +203,7 @@ export default function StudentsClient({
       const file = e.target.files[0]
       setPhotoFile(file)
       setPhotoPreview(URL.createObjectURL(file))
+      setDocErrors((prev) => ({ ...prev, photo: undefined }))
     }
   }
 
@@ -208,11 +212,40 @@ export default function StudentsClient({
       const file = e.target.files[0]
       setIdDocFile(file)
       setIdDocPreview(file.name)
+      setDocErrors((prev) => ({ ...prev, idDoc: undefined }))
     }
   }
 
   async function onSubmit(data: StudentFormData) {
     setServerError('')
+    setDocErrors({})
+
+    // Strict validation: Both passport photo and ID document are required for verification
+    const hasPhoto = Boolean(photoFile || photoPreview)
+    const hasIdDoc = Boolean(idDocFile || idDocPreview)
+
+    if (!hasPhoto || !hasIdDoc) {
+      const vErrors: { photo?: string; idDoc?: string } = {}
+      if (!hasPhoto) {
+        vErrors.photo = isAr
+          ? 'الصورة الشخصية للمتسابق مطلوبة للتحقق وإصدار البطاقة الرسمية *'
+          : 'Candidate passport photo is required for verification and hall ticket issuance *'
+      }
+      if (!hasIdDoc) {
+        vErrors.idDoc = isAr
+          ? 'وثيقة إثبات الهوية (شهادة ميلاد / هوية / جواز) مطلوبة للتحقق *'
+          : 'Identification document (Birth Cert / ID / Passport) is required for verification *'
+      }
+      setDocErrors(vErrors)
+      setServerError(
+        isAr
+          ? 'يرجى رفع الصورة الشخصية للمتسابق ووثيقة إثبات الهوية (المستندات إلزامية للقبول)'
+          : 'Both the candidate passport photo and identification document are mandatory for registration.'
+      )
+      document.getElementById('verification-files-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+
     setFormUploadStatus(isAr ? 'جاري حفظ بيانات المرشح...' : 'Saving candidate profile…')
 
     try {
