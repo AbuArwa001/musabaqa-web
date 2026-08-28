@@ -145,7 +145,14 @@ export default function StudentsClient({
   const primaryStudents = students.filter((s) => !s.is_backup)
   const atCapacity = primaryStudents.length >= 4
 
+  const isApproved = institution?.status === 'APPROVED'
+
   function openAddFormForCategory(catId?: number) {
+    if (!isApproved) {
+      setShowMediaHub(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
     reset({
       full_name: '',
       dob: '',
@@ -490,134 +497,195 @@ export default function StudentsClient({
       <div>
         <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 ${isAr ? 'sm:flex-row-reverse text-right' : ''}`}>
           <div>
-            <h3 className="font-serif text-xl sm:text-2xl font-bold text-gray-900">
-              {isAr ? 'قائمة المرشحين والفئات الأربع' : 'Candidate Roster & Category Quotas'}
-            </h3>
+            <div className={`flex items-center gap-2.5 flex-wrap ${isAr ? 'flex-row-reverse' : ''}`}>
+              <h3 className="font-serif text-xl sm:text-2xl font-bold text-gray-900">
+                {isAr ? 'قائمة المرشحين والفئات الأربع' : 'Candidate Roster & Category Quotas'}
+              </h3>
+              {!isApproved && (
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                  <span>🔒</span>
+                  <span>{isAr ? 'مقفل بانتظار الاعتماد' : 'Locked · Pending Approval'}</span>
+                </span>
+              )}
+            </div>
             <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
               {isAr
-                ? `يحق لكل مؤسسة ترشيح طالب واحد لكل فئة (المجموع: ٤ طلاب كحد أقصى). المسجلون حالياً: ${primaryStudents.length} من ٤.`
+                ? `يحق لكل مؤسسة معتمدة ترشيح طالب واحد لكل فئة (المجموع: ٤ طلاب كحد أقصى). المسجلون حالياً: ${primaryStudents.length} من ٤.`
                 : `Each accredited madrasa can enroll 1 candidate per category (Max 4 candidates). Currently enrolled: ${primaryStudents.length} of 4.`}
             </p>
           </div>
 
-          {!atCapacity && (
+          {isApproved ? (
+            !atCapacity && (
+              <button
+                onClick={() => openAddFormForCategory()}
+                className="portal-btn-primary self-start sm:self-auto cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {t.add_student}
+              </button>
+            )
+          ) : (
             <button
-              onClick={() => openAddFormForCategory()}
-              className="portal-btn-primary self-start sm:self-auto cursor-pointer"
+              onClick={() => {
+                setShowMediaHub(true)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-xl px-4 py-2.5 transition-all shadow-sm cursor-pointer self-start sm:self-auto"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              {t.add_student}
+              <span>🔒</span>
+              <span>{isAr ? 'إكمال ملف التوثيق للاعتماد ↗' : 'Complete Verification Dossier ↗'}</span>
             </button>
           )}
         </div>
 
-        {/* 4 Category Slots Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {categories.map((cat) => {
-            const student = students.find((s) => s.category_id === cat.id && !s.is_backup)
-            const backupStudent = students.find((s) => s.category_id === cat.id && s.is_backup)
+        {/* 4 Category Slots Grid Container */}
+        <div className="relative">
+          <div className={!isApproved ? 'opacity-30 filter blur-[1px] pointer-events-none select-none' : ''}>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {categories.map((cat) => {
+                const student = students.find((s) => s.category_id === cat.id && !s.is_backup)
+                const backupStudent = students.find((s) => s.category_id === cat.id && s.is_backup)
 
-            return (
-              <div
-                key={cat.id}
-                className={`rounded-2xl border p-5 flex flex-col justify-between transition-all duration-300 ${
-                  student
-                    ? 'bg-white border-emerald-300 shadow-sm hover:shadow-md'
-                    : 'bg-white/60 border-dashed border-gray-300 hover:border-emerald-400 hover:bg-emerald-50/20'
-                }`}
-              >
-                <div>
-                  {/* Top Category Badge */}
-                  <div className={`flex items-center justify-between gap-2 mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
-                    <span className="font-serif font-bold text-xs text-gray-900 truncate">
-                      {isAr ? cat.name_ar : cat.name_en}
-                    </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      student ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {student ? (isAr ? 'مسجل ✓' : 'Enrolled ✓') : (isAr ? 'متاح' : 'Available')}
-                    </span>
-                  </div>
-
-                  <p className="text-[11px] text-gray-500 font-mono mb-4">
-                    {isAr
-                      ? `الفئة العمرية: ${cat.min_age ? `${cat.min_age}–` : ''}${cat.max_age} سنة`
-                      : `Ages: ${cat.min_age ? `${cat.min_age}–` : 'Up to '}${cat.max_age} Yrs`}
-                  </p>
-
-                  {/* Filled Student Card Inside Slot */}
-                  {student ? (
-                    <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-200/80 space-y-2.5">
-                      <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                          {student.full_name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-xs text-gray-900 truncate">{student.full_name}</h4>
-                          <p className="text-[10px] text-gray-500 font-mono">REF-{String(student.id).padStart(4, '0')}</p>
-                        </div>
+                return (
+                  <div
+                    key={cat.id}
+                    className={`rounded-2xl border p-5 flex flex-col justify-between transition-all duration-300 ${
+                      student
+                        ? 'bg-white border-emerald-300 shadow-sm hover:shadow-md'
+                        : 'bg-white/60 border-dashed border-gray-300 hover:border-emerald-400 hover:bg-emerald-50/20'
+                    }`}
+                  >
+                    <div>
+                      {/* Top Category Badge */}
+                      <div className={`flex items-center justify-between gap-2 mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+                        <span className="font-serif font-bold text-xs text-gray-900 truncate">
+                          {isAr ? cat.name_ar : cat.name_en}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          student ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {student ? (isAr ? 'مسجل ✓' : 'Enrolled ✓') : (isAr ? 'متاح' : 'Available')}
+                        </span>
                       </div>
 
-                      <div className={`flex items-center justify-between text-[11px] pt-2 border-t border-gray-200 ${isAr ? 'flex-row-reverse' : ''}`}>
-                        <span className="text-gray-500 font-mono">DOB: {student.dob}</span>
-                        {statusBadge(student.review_status, dict)}
-                      </div>
+                      <p className="text-[11px] text-gray-500 font-mono mb-4">
+                        {isAr
+                          ? `الفئة العمرية: ${cat.min_age ? `${cat.min_age}–` : ''}${cat.max_age} سنة`
+                          : `Ages: ${cat.min_age ? `${cat.min_age}–` : 'Up to '}${cat.max_age} Yrs`}
+                      </p>
 
-                      {backupStudent && (
-                        <div className="text-[10px] text-sky-700 bg-sky-50 px-2 py-1 rounded-md border border-sky-200">
-                          <strong>{t.backup_badge}:</strong> {backupStudent.full_name}
+                      {/* Filled Student Card Inside Slot */}
+                      {student ? (
+                        <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-200/80 space-y-2.5">
+                          <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                              {student.full_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-bold text-xs text-gray-900 truncate">{student.full_name}</h4>
+                              <p className="text-[10px] text-gray-500 font-mono">REF-{String(student.id).padStart(4, '0')}</p>
+                            </div>
+                          </div>
+
+                          <div className={`flex items-center justify-between text-[11px] pt-2 border-t border-gray-200 ${isAr ? 'flex-row-reverse' : ''}`}>
+                            <span className="text-gray-500 font-mono">DOB: {student.dob}</span>
+                            {statusBadge(student.review_status, dict)}
+                          </div>
+
+                          {backupStudent && (
+                            <div className="text-[10px] text-sky-700 bg-sky-50 px-2 py-1 rounded-md border border-sky-200">
+                              <strong>{t.backup_badge}:</strong> {backupStudent.full_name}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="py-6 text-center text-gray-400">
+                          <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center mx-auto mb-2 text-gray-400">
+                            +
+                          </div>
+                          <p className="text-xs font-medium text-gray-500">
+                            {isAr ? 'لا يوجد مرشح مسجل' : 'No candidate enrolled'}
+                          </p>
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="py-6 text-center text-gray-400">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center mx-auto mb-2 text-gray-400">
-                        +
-                      </div>
-                      <p className="text-xs font-medium text-gray-500">
-                        {isAr ? 'لا يوجد مرشح مسجل' : 'No candidate enrolled'}
-                      </p>
-                    </div>
-                  )}
-                </div>
 
-                {/* Bottom Action for this Slot */}
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2">
-                  {student ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadPdf(student)}
-                        disabled={downloadingPdfId === student.id}
-                        className="inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-1.5 rounded-lg flex-1 transition-colors cursor-pointer"
-                      >
-                        <span>📄</span>
-                        <span>{downloadingPdfId === student.id ? '...' : 'PDF Pass'}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openEditForm(student)}
-                        className="inline-flex items-center justify-center text-[11px] font-semibold text-gray-700 hover:text-emerald-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                      >
-                        {t.edit_student}
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => openAddFormForCategory(cat.id)}
-                      className="w-full py-2 text-xs font-bold text-[#006838] bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
-                    >
-                      <span>+</span>
-                      <span>{isAr ? 'تسجيل مرشح' : 'Enroll Candidate'}</span>
-                    </button>
-                  )}
+                    {/* Bottom Action for this Slot */}
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2">
+                      {student ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadPdf(student)}
+                            disabled={downloadingPdfId === student.id}
+                            className="inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-1.5 rounded-lg flex-1 transition-colors cursor-pointer"
+                          >
+                            <span>📄</span>
+                            <span>{downloadingPdfId === student.id ? '...' : 'PDF Pass'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEditForm(student)}
+                            className="inline-flex items-center justify-center text-[11px] font-semibold text-gray-700 hover:text-emerald-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          >
+                            {t.edit_student}
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => openAddFormForCategory(cat.id)}
+                          className="w-full py-2 text-xs font-bold text-[#006838] bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                        >
+                          <span>+</span>
+                          <span>{isAr ? 'تسجيل مرشح' : 'Enroll Candidate'}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Frosted Glass Lock Barrier (when NOT approved) */}
+          {!isApproved && (
+            <div className="absolute inset-0 flex items-center justify-center p-4 bg-white/60 backdrop-blur-[2px] rounded-3xl border border-dashed border-amber-300 shadow-md">
+              <div className="max-w-md w-full bg-white/95 border border-amber-200 rounded-2xl p-6 sm:p-7 text-center shadow-xl space-y-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 border border-amber-300 flex items-center justify-center mx-auto text-2xl font-bold shadow-inner">
+                  🔒
+                </div>
+                <h4 className="font-serif font-bold text-gray-900 text-base sm:text-lg">
+                  {isAr ? 'تسجيل المرشحين مقفل مؤقتاً' : 'Candidate Enrolment Locked'}
+                </h4>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  {institution?.status === 'REJECTED'
+                    ? (isAr
+                        ? `تم رفض طلب المؤسسة: ${institution.rejection_reason || 'بيانات غير مكتملة'}. يرجى التواصل مع إدارة المسجد.`
+                        : `Application not approved: ${institution.rejection_reason || 'Incomplete verification'}. Please contact Jamia Mosque administration.`)
+                    : (isAr
+                        ? 'سيتم تفعيل تسجيل المرشحين فور اعتماد ملف المؤسسة من قبل لجنة مسجد جامع نيروبي. يرجى استكمال رفع وثائق المؤسسة وصور الشيخ والفصول والفيديو أعلاه.'
+                        : 'Student nomination will unlock immediately once your institution dossier is reviewed and approved by the Jamia Mosque Committee. Please upload your teacher, classroom, and video media above.')}
+                </p>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMediaHub(true)
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-5 py-2.5 rounded-xl shadow-sm transition-all cursor-pointer"
+                  >
+                    <span>📁</span>
+                    <span>{isAr ? 'فتح ملف التوثيق لرفع الوسائط ↗' : 'Complete Verification Dossier Above ↗'}</span>
+                  </button>
                 </div>
               </div>
-            )
-          })}
+            </div>
+          )}
         </div>
       </div>
 
