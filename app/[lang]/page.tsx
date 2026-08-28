@@ -9,11 +9,11 @@ export async function generateMetadata(props: PageProps<'/[lang]'>): Promise<Met
   const { lang } = await props.params
   return {
     title: lang === 'ar'
-      ? 'مسابقة حفظ القرآن | مسجد جامع نيروبي'
-      : 'Musabaqa — Quran Memorization Competition | Jamia Mosque Nairobi',
+      ? 'مسابقة حفظ القرآن الكريم وتجويده | مسجد جامع نيروبي'
+      : 'Musabaqa — Quran Memorization & Recitation Competition 2026 | Jamia Mosque Nairobi',
     description: lang === 'ar'
-      ? 'مسابقة حفظ القرآن الكريم السنوية — مسجد جامع نيروبي'
-      : 'Annual Quran Memorization Competition by Jamia Mosque Nairobi. Compete in 4 categories.',
+      ? 'مسابقة حفظ القرآن الكريم السنوية — مسجد جامع نيروبي. التنافس في ٤ فئات لحفظ كتاب الله.'
+      : 'Annual Quran Memorization & Recitation Competition by Jamia Mosque Nairobi. Celebrating the Huffaz across 4 tiers.',
   }
 }
 
@@ -24,12 +24,12 @@ const CATEGORIES = [
     name_ar: 'الأجزاء ١–١٠',
     ages: '7–12',
     rubric: [
-      { name_en: 'Memorization', name_ar: 'الحفظ', points: 50 },
-      { name_en: 'Tajweed', name_ar: 'التجويد', points: 30 },
-      { name_en: 'Saut', name_ar: 'الصوت', points: 20 },
+      { name_en: 'Memorization (Hifdh)', name_ar: 'الحفظ والإتقان', points: 50 },
+      { name_en: 'Tajweed Rules', name_ar: 'أحكام التجويد', points: 30 },
+      { name_en: 'Voice & Melody (Saut)', name_ar: 'حسن الصوت والأداء', points: 20 },
     ],
-    gradient: 'from-emerald-600/30 to-emerald-900/5',
-    border: 'border-emerald-500/20',
+    gradient: 'from-emerald-600/25 via-emerald-950/20 to-transparent',
+    border: 'border-emerald-500/30',
     accent: 'text-emerald-400',
     icon: '📗',
   },
@@ -39,12 +39,12 @@ const CATEGORIES = [
     name_ar: 'الأجزاء ١١–٢٠',
     ages: '10–15',
     rubric: [
-      { name_en: 'Memorization', name_ar: 'الحفظ', points: 50 },
-      { name_en: 'Tajweed', name_ar: 'التجويد', points: 30 },
-      { name_en: 'Saut', name_ar: 'الصوت', points: 20 },
+      { name_en: 'Memorization (Hifdh)', name_ar: 'الحفظ والإتقان', points: 50 },
+      { name_en: 'Tajweed Rules', name_ar: 'أحكام التجويد', points: 30 },
+      { name_en: 'Voice & Melody (Saut)', name_ar: 'حسن الصوت والأداء', points: 20 },
     ],
-    gradient: 'from-sky-600/30 to-sky-900/5',
-    border: 'border-sky-500/20',
+    gradient: 'from-sky-600/25 via-sky-950/20 to-transparent',
+    border: 'border-sky-500/30',
     accent: 'text-sky-400',
     icon: '📘',
   },
@@ -54,30 +54,61 @@ const CATEGORIES = [
     name_ar: 'الأجزاء ٢١–٢٩',
     ages: '13–18',
     rubric: [
-      { name_en: 'Memorization', name_ar: 'الحفظ', points: 50 },
-      { name_en: 'Tajweed', name_ar: 'التجويد', points: 30 },
-      { name_en: 'Saut', name_ar: 'الصوت', points: 20 },
+      { name_en: 'Memorization (Hifdh)', name_ar: 'الحفظ والإتقان', points: 50 },
+      { name_en: 'Tajweed Rules', name_ar: 'أحكام التجويد', points: 30 },
+      { name_en: 'Voice & Melody (Saut)', name_ar: 'حسن الصوت والأداء', points: 20 },
     ],
-    gradient: 'from-purple-600/30 to-purple-900/5',
-    border: 'border-purple-500/20',
+    gradient: 'from-purple-600/25 via-purple-950/20 to-transparent',
+    border: 'border-purple-500/30',
     accent: 'text-purple-400',
     icon: '📙',
   },
   {
     nameKey: 'category_juz30' as const,
-    name_en: "Juz' 30 (Complete)",
-    name_ar: 'الجزء الثلاثون (حفظ كامل)',
+    name_en: "Juz' 30 (Complete Quran)",
+    name_ar: 'القرآن كاملاً (٣٠ جزءاً)',
     ages: 'Open',
     rubric: [
-      { name_en: 'Memorization', name_ar: 'الحفظ', points: 45 },
-      { name_en: 'Tajweed', name_ar: 'التجويد', points: 25 },
-      { name_en: 'Tafsir', name_ar: 'التفسير', points: 10 },
-      { name_en: 'Saut', name_ar: 'الصوت', points: 20 },
+      { name_en: 'Memorization (Hifdh)', name_ar: 'الحفظ والإتقان', points: 45 },
+      { name_en: 'Tajweed Rules', name_ar: 'أحكام التجويد', points: 25 },
+      { name_en: 'Tafsir & Meaning', name_ar: 'معاني الآيات والتفسير', points: 10 },
+      { name_en: 'Voice & Melody (Saut)', name_ar: 'حسن الصوت والأداء', points: 20 },
     ],
-    gradient: 'from-amber-600/30 to-amber-900/5',
-    border: 'border-[#c99335]/30',
+    gradient: 'from-amber-600/30 via-amber-950/20 to-transparent',
+    border: 'border-[#c99335]/40',
     accent: 'text-[#c99335]',
     icon: '📜',
+  },
+]
+
+// Quranic Verses on Memorization and Recitation
+const QURANIC_VERSES = [
+  {
+    arabic: 'إِنَّ الَّذِينَ يَتْلُونَ كِتَابَ اللَّهِ وَأَقَامُوا الصَّلَاةَ وَأَنفَقُوا مِمَّا رَزَقْنَاهُمْ سِرًّا وَعَلَانِيَةً يَرْجُونَ تِجَارَةً لَّن تَبُورَ',
+    translation_en: 'Indeed, those who recite the Book of Allah and establish prayer and spend out of what We have provided them, secretly and publicly, hope for a commerce that will never perish.',
+    translation_ar: 'الذين يداومون على قراءة القرآن، وأقاموا الصلاة، وأنفقوا مما رزقناهم يرجون تجارة لن تبور ولن تهلك.',
+    reference_en: 'Surah Fatir [35:29]',
+    reference_ar: 'سورة فاطر: ٢٩',
+    badge_en: 'The Everlasting Commerce',
+    badge_ar: 'التجارة الرابحة',
+  },
+  {
+    arabic: 'وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا',
+    translation_en: 'And recite the Quran with measured recitation and Tajweed.',
+    translation_ar: 'فاقرأ القرآن بتؤدة وتمهل وتبيين للحروف والوقوف.',
+    reference_en: 'Surah Al-Muzzammil [73:4]',
+    reference_ar: 'سورة المزمل: ٤',
+    badge_en: 'Divine Command for Tajweed',
+    badge_ar: 'الأمر بالتلاوة والترتيل',
+  },
+  {
+    arabic: 'إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ',
+    translation_en: 'Indeed, it is We who sent down the Quran and indeed, We will be its guardian.',
+    translation_ar: 'إنا نحن أنزلنا هذا القرآن على نبينا محمد ﷺ، وإنا لحافظون له من الزيادة والنقصان والتحريف.',
+    reference_en: 'Surah Al-Hijr [15:9]',
+    reference_ar: 'سورة الحجر: ٩',
+    badge_en: 'Divine Preservation in Hearts',
+    badge_ar: 'حفظ الله لكتابه',
   },
 ]
 
@@ -99,22 +130,22 @@ export default async function HomePage(props: PageProps<'/[lang]'>) {
   return (
     <div className="relative overflow-hidden selection:bg-[#c99335]/30">
 
-      {/* ── Hero (client component for animations) ── */}
+      {/* ── Hero (with Holy Quran on Rehal & gold-grey shade) ── */}
       <HomeHero lang={lang} dict={dict} />
 
       {/* ── Countdown ── */}
-      <section className="relative z-20 py-16 px-4 -mt-24">
+      <section className="relative z-20 py-16 px-4 -mt-20">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-stone-900/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-6 shadow-2xl">
+            <div className="bg-stone-900/70 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl">
               <Countdown
                 label={t.countdown_registration}
                 target={DATES.registrationOpen}
                 dict={{ days: t.days, hours: t.hours, minutes: t.minutes, seconds: t.seconds }}
               />
             </div>
-            <div className="bg-gradient-to-br from-[#c99335]/20 to-amber-900/20 backdrop-blur-2xl border border-[#c99335]/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden transform md:-translate-y-4">
-              <div className="absolute inset-0 bg-gradient-to-t from-[#c99335]/10 to-transparent pointer-events-none" />
+            <div className="bg-gradient-to-br from-[#c99335]/25 to-amber-950/40 backdrop-blur-2xl border border-[#c99335]/40 rounded-3xl p-6 shadow-2xl relative overflow-hidden transform md:-translate-y-4">
+              <div className="absolute inset-0 bg-gradient-to-t from-[#c99335]/15 to-transparent pointer-events-none" />
               <Countdown
                 label={t.countdown_deadline}
                 target={DATES.registrationClose}
@@ -122,7 +153,7 @@ export default async function HomePage(props: PageProps<'/[lang]'>) {
                 accent="amber"
               />
             </div>
-            <div className="bg-stone-900/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-6 shadow-2xl">
+            <div className="bg-stone-900/70 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl">
               <Countdown
                 label={t.countdown_competition}
                 target={DATES.competition}
@@ -134,12 +165,89 @@ export default async function HomePage(props: PageProps<'/[lang]'>) {
         </div>
       </section>
 
-      {/* ── Categories ── */}
+      {/* ── Noble Quranic Verses Section (User Requirement) ── */}
+      <section className="relative py-24 px-4 bg-gradient-to-b from-[#120e0c] via-[#0d0a09] to-[#120e0c] border-y border-[#c99335]/15">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,rgba(201,147,53,0.08),transparent)] pointer-events-none" />
+        
+        <div className="relative max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center justify-center gap-4 mb-4">
+              <div className="h-[1px] w-16 bg-gradient-to-r from-transparent to-[#c99335]/60" />
+              <span className="text-[#c99335] uppercase tracking-[0.3em] text-xs font-semibold">
+                {isAr ? 'فضل القرآن الكريم وتلاوته' : 'Divine Quranic Virtues'}
+              </span>
+              <div className="h-[1px] w-16 bg-gradient-to-l from-transparent to-[#c99335]/60" />
+            </div>
+            <h2 className="font-serif text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-stone-200 to-[#c99335] mb-4">
+              {isAr ? 'آيات بينات في فضل القرآن وحفظته' : 'Guiding Quranic Verses on Memorization'}
+            </h2>
+            <p className="text-stone-400 text-sm sm:text-base max-w-2xl mx-auto font-light">
+              {isAr
+                ? 'قال رسول الله ﷺ: «خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ» — تكريماً لأهل القرآن وخاصته في رحاب مسجد جامع نيروبي.'
+                : 'The Prophet ﷺ said: "The best of you are those who learn the Quran and teach it" — Celebrating the memorizers of Allah\'s Book.'}
+            </p>
+          </div>
+
+          {/* Verses Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+            {QURANIC_VERSES.map((v, i) => (
+              <div
+                key={i}
+                className="group relative bg-gradient-to-br from-black/60 via-[#181310]/80 to-black/60 border border-[#c99335]/25 rounded-3xl p-8 flex flex-col justify-between hover:border-[#c99335]/60 transition-all duration-500 hover:shadow-[0_15px_40px_rgba(201,147,53,0.12)] backdrop-blur-xl"
+              >
+                <div className="space-y-6">
+                  {/* Top Badge */}
+                  <div className={`flex items-center justify-between ${isAr ? 'flex-row-reverse' : ''}`}>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#c99335] bg-[#c99335]/10 px-3 py-1 rounded-full border border-[#c99335]/20">
+                      {isAr ? v.badge_ar : v.badge_en}
+                    </span>
+                    <span className="text-xs font-mono text-stone-500">
+                      {isAr ? v.reference_ar : v.reference_en}
+                    </span>
+                  </div>
+
+                  {/* Arabic Quranic Verse */}
+                  <div className="text-center py-4 px-2 bg-gradient-to-b from-white/5 to-transparent rounded-2xl border border-white/5">
+                    <p className="font-serif text-xl sm:text-2xl text-white font-bold leading-loose tracking-wide text-center" dir="rtl">
+                      ﴿ {v.arabic} ﴾
+                    </p>
+                  </div>
+
+                  {/* Translation */}
+                  <p className={`text-sm text-stone-300 leading-relaxed font-light ${isAr ? 'text-right' : 'text-left'}`}>
+                    {isAr ? v.translation_ar : `"${v.translation_en}"`}
+                  </p>
+                </div>
+
+                {/* Footer Reference */}
+                <div className={`pt-6 mt-6 border-t border-white/10 flex items-center justify-between text-xs text-stone-400 ${isAr ? 'flex-row-reverse' : ''}`}>
+                  <span className="font-semibold text-[#f6cb7d]">{isAr ? v.reference_ar : v.reference_en}</span>
+                  <span className="text-stone-500">Jamia Mosque Musabaqa</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Prophetic Hadith Banner */}
+          <div className="mt-12 p-6 sm:p-8 bg-gradient-to-r from-emerald-950/40 via-stone-900/60 to-emerald-950/40 border border-emerald-500/30 rounded-3xl text-center max-w-3xl mx-auto shadow-xl">
+            <p className="font-serif text-xl sm:text-2xl font-bold text-emerald-300 mb-2" dir="rtl">
+              « خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ »
+            </p>
+            <p className="text-xs sm:text-sm text-stone-300 font-light">
+              {isAr
+                ? 'رواه الإمام البخاري في صحيحه عن عثمان بن عفان رضي الله عنه'
+                : 'Narrated by Uthman bin Affan (RA) — Sahih Al-Bukhari: "The best among you are those who learn the Quran and teach it."'}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Categories & Rubric ── */}
       <section className="relative py-24 px-4">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/10 via-[#120e0c] to-[#120e0c] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            {/* Section label */}
             <div className="inline-flex items-center justify-center gap-4 mb-6">
               <div className="h-[1px] w-16 bg-gradient-to-r from-transparent to-[#c99335]/50" />
               <span className="text-[#c99335] uppercase tracking-[0.3em] text-xs font-semibold">{t.categories_title}</span>
