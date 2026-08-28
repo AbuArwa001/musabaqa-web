@@ -92,6 +92,10 @@ export interface InstitutionRead {
   county_id: number | null
   region_id: number | null
   document_url: string | null
+  teacher_photo_url: string | null
+  classroom_photo_url: string | null
+  students_photo_url: string | null
+  video_url: string | null
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   rejection_reason: string | null
   preferred_language: 'EN' | 'AR'
@@ -109,17 +113,25 @@ export async function uploadInstitutionDocument(
   institutionId: number,
   file: File
 ): Promise<{ s3_key: string; url: string }> {
+  return uploadInstitutionMedia(institutionId, 'document', file)
+}
+
+export async function uploadInstitutionMedia(
+  institutionId: number,
+  mediaType: 'document' | 'teacher' | 'classroom' | 'students' | 'video',
+  file: File
+): Promise<{ media_type: string; s3_key: string; url: string }> {
   const formData = new FormData()
   formData.append('file', file)
 
-  const res = await fetch(`${API_URL}/api/v1/institutions/${institutionId}/document`, {
+  const res = await fetch(`${API_URL}/api/v1/institutions/${institutionId}/media?media_type=${mediaType}`, {
     method: 'POST',
     body: formData,
   })
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new ApiError(res.status, err.detail || 'Document upload failed')
+    throw new ApiError(res.status, err.detail || `Upload failed for ${mediaType}`)
   }
 
   return res.json()

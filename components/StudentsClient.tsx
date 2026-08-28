@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createStudent, updateStudent, getStudentPdfUrl, ApiError } from '@/lib/api'
+import { createStudent, updateStudent, getStudentPdfUrl, uploadInstitutionMedia, ApiError } from '@/lib/api'
 import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
@@ -41,6 +41,11 @@ interface Institution {
   email?: string
   status?: 'PENDING' | 'APPROVED' | 'REJECTED'
   rejection_reason?: string | null
+  document_url?: string | null
+  teacher_photo_url?: string | null
+  classroom_photo_url?: string | null
+  students_photo_url?: string | null
+  video_url?: string | null
   created_at?: string
 }
 
@@ -79,7 +84,7 @@ interface StudentsClientProps {
 export default function StudentsClient({
   initialStudents,
   categories,
-  institution,
+  institution: initialInst,
   dict,
   lang,
   token,
@@ -88,10 +93,47 @@ export default function StudentsClient({
   const tf = dict.student_form
   const isAr = lang === 'ar'
 
+  const [institution, setInstitution] = useState<Institution | null>(initialInst)
   const [students, setStudents] = useState<Student[]>(initialStudents)
   const [showForm, setShowForm] = useState(false)
+  const [showMediaHub, setShowMediaHub] = useState(false)
+  const [uploadingType, setUploadingType] = useState<string | null>(null)
+  const [mediaMsg, setMediaMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [serverError, setServerError] = useState('')
+
+  const handleMediaUpload = async (mediaType: 'document' | 'teacher' | 'classroom' | 'students' | 'video', e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !institution) return
+    const file = e.target.files[0]
+    setUploadingType(mediaType)
+    setMediaMsg(null)
+
+    try {
+      const res = await uploadInstitutionMedia(institution.id, mediaType, file)
+      setInstitution((prev) => {
+        if (!prev) return prev
+        const fieldMap: Record<string, keyof Institution> = {
+          document: 'document_url',
+          teacher: 'teacher_photo_url',
+          classroom: 'classroom_photo_url',
+          students: 'students_photo_url',
+          video: 'video_url',
+        }
+        return { ...prev, [fieldMap[mediaType]]: res.url }
+      })
+      setMediaMsg({
+        type: 'success',
+        text: isAr ? 'تم رفع الملف بنجاح وحفظه في النظام' : 'File uploaded successfully and saved to AWS.',
+      })
+    } catch (err: any) {
+      setMediaMsg({
+        type: 'error',
+        text: err.message || (isAr ? 'فشل رفع الملف' : 'Failed to upload file.'),
+      })
+    } finally {
+      setUploadingType(null)
+    }
+  }
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } =
     useForm<StudentFormData>({ resolver: zodResolver(studentSchema) })
@@ -232,11 +274,269 @@ export default function StudentsClient({
             </div>
 
             <div className={`flex items-center gap-2 shrink-0 ${isAr ? 'flex-row-reverse' : ''}`}>
-              <span className="text-[11px] font-mono text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setShowMediaHub(!showMediaHub)}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {showMediaHub
+                  ? (isAr ? 'إخفاء ملف التوثيق والوسائط ▲' : 'Hide Verification Media ▲')
+                  : (isAr ? 'ملف التوثيق والصور والفيديو (انقر للرفع) ▼' : 'Accreditation Media Hub (Upload) ▼')}
+              </button>
+              <span className="text-[11px] font-mono text-gray-500 bg-gray-100 px-2.5 py-1.5 rounded-lg border border-gray-200">
                 REF: INST-{String(institution.id).padStart(4, '0')}
               </span>
             </div>
           </div>
+
+          {/* ── Media Feedback Message ── */}
+          {mediaMsg && (
+            <div className={`mt-4 p-3 rounded-lg text-xs font-medium flex items-center gap-2 ${
+              mediaMsg.type === 'success' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'
+            }`}>
+              <span>{mediaMsg.type === 'success' ? '✓' : '⚠️'}</span>
+              <span>{mediaMsg.text}</span>
+            </div>
+          )}
+
+          {/* ── Expandable Accreditation & Media Hub ── */}
+          {showMediaHub && (
+            <div className="mt-5 pt-5 border-t border-gray-200">
+              <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 ${isAr ? 'sm:flex-row-reverse text-right' : ''}`}>
+                <div>
+                  <h4 className="font-serif font-bold text-sm text-gray-900">
+                    {isAr ? 'ملفات التوثيق والاعتماد لمراجعة اللجنة' : 'Accreditation Dossier & Media for Committee Approval'}
+                  </h4>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {isAr
+                      ? 'يرجى رفع صور المعلم والفصول والطلاب وفيديو تعريفي بالمدرسة لتسريع الاعتماد.'
+                      : 'Attach photos of your lead Ustadh, classroom premises, students in session, and an introduction video to expedite approval.'}
+                  </p>
+                </div>
+                <div className="text-xs text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 self-start sm:self-auto">
+                  AWS S3: institutions/{institution.name.replace(/\s+/g, '_')}/
+                </div>
+              </div>
+
+              {/* 5-Slot Media Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                
+                {/* 1. Official Registration Document */}
+                <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-emerald-500/50 transition-colors shadow-sm">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                        📄
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        institution.document_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {institution.document_url ? 'Uploaded ✓' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="font-bold text-xs text-gray-900">Official Certificate</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Madrasa / SUPKEM Doc</p>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
+                    <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-emerald-50 hover:text-emerald-800">
+                      {uploadingType === 'document' ? 'Uploading…' : (institution.document_url ? 'Replace' : 'Upload')}
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*"
+                        className="hidden"
+                        disabled={uploadingType !== null}
+                        onChange={(e) => handleMediaUpload('document', e)}
+                      />
+                    </label>
+                    {institution.document_url && (
+                      <a
+                        href={institution.document_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 text-emerald-700 hover:text-emerald-900 text-xs font-bold"
+                        title="View Document"
+                      >
+                        ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Head Ustadh / Teacher Photo */}
+                <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-emerald-500/50 transition-colors shadow-sm">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center font-bold text-xs">
+                        👨‍🏫
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        institution.teacher_photo_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {institution.teacher_photo_url ? 'Uploaded ✓' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="font-bold text-xs text-gray-900">Head Ustadh Photo</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Lead Teacher / Imam</p>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
+                    <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-sky-50 hover:text-sky-800">
+                      {uploadingType === 'teacher' ? 'Uploading…' : (institution.teacher_photo_url ? 'Replace' : 'Upload')}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg"
+                        className="hidden"
+                        disabled={uploadingType !== null}
+                        onChange={(e) => handleMediaUpload('teacher', e)}
+                      />
+                    </label>
+                    {institution.teacher_photo_url && (
+                      <a
+                        href={institution.teacher_photo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 text-sky-700 hover:text-sky-900 text-xs font-bold"
+                        title="View Photo"
+                      >
+                        ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. Madrasa Classroom / Premises Photo */}
+                <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-emerald-500/50 transition-colors shadow-sm">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-xs">
+                        🏫
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        institution.classroom_photo_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {institution.classroom_photo_url ? 'Uploaded ✓' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="font-bold text-xs text-gray-900">Classroom Premises</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Halaqa / Building Photo</p>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
+                    <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-amber-50 hover:text-amber-800">
+                      {uploadingType === 'classroom' ? 'Uploading…' : (institution.classroom_photo_url ? 'Replace' : 'Upload')}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg"
+                        className="hidden"
+                        disabled={uploadingType !== null}
+                        onChange={(e) => handleMediaUpload('classroom', e)}
+                      />
+                    </label>
+                    {institution.classroom_photo_url && (
+                      <a
+                        href={institution.classroom_photo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 text-amber-700 hover:text-amber-900 text-xs font-bold"
+                        title="View Photo"
+                      >
+                        ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4. Students in Session Photo */}
+                <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-emerald-500/50 transition-colors shadow-sm">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                        👥
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        institution.students_photo_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {institution.students_photo_url ? 'Uploaded ✓' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="font-bold text-xs text-gray-900">Students Session</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Madrasa Assembly Photo</p>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
+                    <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-emerald-50 hover:text-emerald-800">
+                      {uploadingType === 'students' ? 'Uploading…' : (institution.students_photo_url ? 'Replace' : 'Upload')}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg"
+                        className="hidden"
+                        disabled={uploadingType !== null}
+                        onChange={(e) => handleMediaUpload('students', e)}
+                      />
+                    </label>
+                    {institution.students_photo_url && (
+                      <a
+                        href={institution.students_photo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 text-emerald-700 hover:text-emerald-900 text-xs font-bold"
+                        title="View Photo"
+                      >
+                        ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5. Madrasa / Recitation Video */}
+                <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-emerald-500/50 transition-colors shadow-sm">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="w-7 h-7 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center font-bold text-xs">
+                        🎥
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        institution.video_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {institution.video_url ? 'Uploaded ✓' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="font-bold text-xs text-gray-900">Introduction Video</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Tour / Recitation (.mp4)</p>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
+                    <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-rose-50 hover:text-rose-800">
+                      {uploadingType === 'video' ? 'Uploading…' : (institution.video_url ? 'Replace' : 'Upload')}
+                      <input
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/webm,video/*"
+                        className="hidden"
+                        disabled={uploadingType !== null}
+                        onChange={(e) => handleMediaUpload('video', e)}
+                      />
+                    </label>
+                    {institution.video_url && (
+                      <a
+                        href={institution.video_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 text-rose-700 hover:text-rose-900 text-xs font-bold"
+                        title="Watch Video"
+                      >
+                        ▶
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
         </div>
       )}
 
