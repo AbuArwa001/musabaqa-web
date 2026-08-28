@@ -243,57 +243,8 @@ export default async function HomePage(props: PageProps<'/[lang]'>) {
         </div>
       </section>
 
-      {/* ── Categories & Rubric ── */}
-      <section className="relative py-24 px-4">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/10 via-[#120e0c] to-[#120e0c] pointer-events-none" />
-        <div className="relative max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center justify-center gap-4 mb-6">
-              <div className="h-[1px] w-16 bg-gradient-to-r from-transparent to-[#c99335]/50" />
-              <span className="text-[#c99335] uppercase tracking-[0.3em] text-xs font-semibold">{t.categories_title}</span>
-              <div className="h-[1px] w-16 bg-gradient-to-l from-transparent to-[#c99335]/50" />
-            </div>
-            <h2 className="font-serif text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-stone-400 mb-4">
-              {t.rubric_title}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-8">
-            {CATEGORIES.map((cat) => (
-              <div
-                key={cat.name_en}
-                className={`group relative bg-gradient-to-br ${cat.gradient} backdrop-blur-xl border ${cat.border} rounded-3xl p-8 flex flex-col gap-6 hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(201,147,53,0.15)] overflow-hidden`}
-              >
-                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-
-                <div className="text-5xl drop-shadow-lg transform group-hover:scale-110 transition-transform duration-500 origin-bottom">
-                  {cat.icon}
-                </div>
-
-                <div>
-                  <h3 className="font-serif text-2xl font-bold text-white mb-2">
-                    {isAr ? cat.name_ar : cat.name_en}
-                  </h3>
-                  <div className="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-3 py-1">
-                    <span className="text-xs font-medium text-stone-300">
-                      {t.age_range}: <span className={cat.accent}>{cat.ages === 'Open' ? (isAr ? 'مفتوح' : 'Open') : cat.ages}</span>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-3 mt-auto pt-6 border-t border-white/5">
-                  {cat.rubric.map((r) => (
-                    <div key={r.name_en} className={`flex items-center justify-between ${isAr ? 'flex-row-reverse' : ''}`}>
-                      <span className="text-sm text-stone-400 group-hover:text-stone-300 transition-colors">{isAr ? r.name_ar : r.name_en}</span>
-                      <span className="text-sm font-bold text-[#c99335] bg-[#c99335]/10 px-2 py-0.5 rounded">{r.points}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── Scoring Rubric & Evaluation Standards ── */}
+      <ScoringRubric lang={lang} dict={dict} />
 
       {/* ── Schedule & Prizes ── */}
       <section className="relative py-24 px-4 border-t border-white/5 bg-gradient-to-b from-[#120e0c] to-[#0a0807]">
