@@ -22,66 +22,134 @@
   }
 
   body {
-    background-color: var(--color-jamia-cream);
-    color: var(--color-jamia-dark);
-    font-family: 'Outfit', 'Noto Sans Arabic', system-ui, sans-serif;
+    background-color: #120e0c;
+    color: rgb(214 211 209); /* stone-300 */
+    font-family: var(--font-outfit), 'Outfit', 'Noto Sans Arabic', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cinzel', 'Noto Kufi Arabic', system-ui, serif;
+    font-family: var(--font-cinzel), 'Cinzel', 'Noto Kufi Arabic', system-ui, serif;
   }
 
-  /* Arabic: use Amiri / Noto Naskh Arabic for body + Noto Kufi Arabic for headings */
-  [dir=tl] {
-    font-family: 'Noto Sans Arabic', 'Amiri', system-ui, sans-serif;
+  /* Arabic: use Noto Sans Arabic */
+  [dir=rtl] {
+    font-family: var(--font-outfit), 'Noto Sans Arabic', 'Amiri', system-ui, sans-serif;
   }
 
-  /* Smooth RTL transitions */
-  [dir=tl] .flip-rtl {
+  [dir=rtl] .flip-rtl {
     transform: scaleX(-1);
+  }
+
+  /* ── Portal (light/admin) theme ── */
+  .portal-theme body,
+  .portal-theme {
+    background-color: rgb(249 250 251); /* gray-50 */
+    color: rgb(17 24 39); /* gray-900 */
+  }
+
+  .portal-theme h1, .portal-theme h2, .portal-theme h3,
+  .portal-theme h4, .portal-theme h5, .portal-theme h6 {
+    font-family: var(--font-cinzel), 'Cinzel', system-ui, serif;
   }
 }
 
+/* ════════════════════════════════════════════
+   PUBLIC SITE DARK COMPONENT CLASSES
+   ════════════════════════════════════════════ */
 @layer components {
+  /* Buttons */
   .btn-primary {
-    @apply bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] border border-emerald-500/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] border border-emerald-500/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
   }
-
   .btn-secondary {
-    @apply bg-white/5 hover:bg-white/10 text-stone-300 font-medium px-6 py-3 rounded-xl border border-white/10 transition-all duration-300 active:scale-95;
+    @apply bg-white/5 hover:bg-white/10 text-stone-300 font-medium px-6 py-3 rounded-xl border border-white/10 transition-all duration-300 active:scale-95 cursor-pointer;
   }
 
+  /* Cards — dark glassmorphic (public portal) */
   .card {
     @apply bg-white/5 border border-white/10 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl;
   }
 
+  /* Inputs — dark (public portal) */
   .input-field {
     @apply w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3
            placeholder-stone-500 focus:outline-none focus:border-amber-500/50 focus:bg-black/60
            focus:shadow-[0_0_15px_rgba(201,147,53,0.15)] transition-all duration-300;
   }
-
   .label {
     @apply text-sm font-medium text-stone-300 mb-1.5 block;
   }
-
   .error-text {
     @apply text-red-400 text-sm mt-1.5;
   }
 
+  /* Status badges — dark (public portal) */
   .badge-pending {
     @apply bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs px-3 py-1 rounded-full font-medium shadow-[0_0_10px_rgba(245,158,11,0.2)];
   }
-
   .badge-approved {
     @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs px-3 py-1 rounded-full font-medium shadow-[0_0_10px_rgba(16,185,129,0.2)];
   }
-
   .badge-rejected {
     @apply bg-red-500/10 text-red-400 border border-red-500/30 text-xs px-3 py-1 rounded-full font-medium shadow-[0_0_10px_rgba(239,68,68,0.2)];
   }
-
   .live-dot {
     @apply w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)];
   }
 }
+
+/* ════════════════════════════════════════════
+   PORTAL / ADMIN COMPONENT CLASSES (light theme)
+   ════════════════════════════════════════════ */
+@layer components {
+  /* Buttons — portal */
+  .portal-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#006838] hover:bg-[#007c43] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm active:scale-[0.99] disabled:opacity-60 cursor-pointer;
+  }
+  .portal-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-200 transition-colors active:scale-[0.99] cursor-pointer;
+  }
+  .portal-btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium rounded-lg border border-red-200 transition-colors active:scale-[0.99] cursor-pointer;
+  }
+
+  /* Cards — light admin */
+  .admin-card {
+    @apply bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow;
+  }
+  .admin-card-header {
+    @apply border-b border-gray-100 pb-4 mb-4;
+  }
+
+  /* Inputs — light admin */
+  .admin-input {
+    @apply w-full h-10 px-3 bg-white border border-gray-300 text-gray-900 rounded-lg text-sm
+           placeholder-gray-400 focus:outline-none focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20
+           transition-all duration-200;
+  }
+  .admin-label {
+    @apply text-xs font-semibold text-gray-600 mb-1.5 block uppercase tracking-wide;
+  }
+  .admin-error {
+    @apply text-red-600 text-xs mt-1 font-medium;
+  }
+  .admin-select {
+    @apply w-full h-10 px-3 bg-white border border-gray-300 text-gray-900 rounded-lg text-sm
+           focus:outline-none focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20
+           transition-all duration-200 cursor-pointer;
+  }
+
+  /* Status badges — light admin */
+  .admin-badge-pending {
+    @apply bg-amber-50 text-amber-700 border border-amber-200 text-xs px-2.5 py-1 rounded-full font-semibold;
+  }
+  .admin-badge-approved {
+    @apply bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-1 rounded-full font-semibold;
+  }
+  .admin-badge-rejected {
+    @apply bg-red-50 text-red-700 border border-red-200 text-xs px-2.5 py-1 rounded-full font-semibold;
+  }
+}
+
+

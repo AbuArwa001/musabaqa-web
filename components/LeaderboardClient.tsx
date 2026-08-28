@@ -129,22 +129,22 @@ export default function LeaderboardClient({
               onClick={() => setSelectedCategoryId(cat.id)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 selectedCategoryId === cat.id
-                  ? 'bg-jamia-gold text-black shadow-lg shadow-amber-500/20'
-                  : 'bg-jamia-dark/5 text-jamia-dark/80 hover:bg-jamia-dark/10'
+                  ? 'bg-[#c99335] text-black shadow-lg shadow-amber-500/20'
+                  : 'bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white border border-white/10'
               }`}
             >
               {isAr ? cat.name_ar : cat.name_en}
             </button>
           ))}
           {categories.length === 0 && (
-            <p className="text-jamia-dark/50 text-sm">{t.select_category}</p>
+            <p className="text-stone-400 text-sm">{t.select_category}</p>
           )}
         </div>
 
         <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
           {statusIndicator}
           {lastUpdated && (
-            <span className="text-jamia-dark/40 text-xs">
+            <span className="text-stone-500 text-xs">
               {t.last_updated}: {lastUpdated.toLocaleTimeString()}
             </span>
           )}
@@ -155,18 +155,18 @@ export default function LeaderboardClient({
       {entries.length === 0 ? (
         <div className="card text-center py-20">
           <p className="text-4xl mb-4">📊</p>
-          <p className="text-jamia-dark/60">{t.no_results}</p>
+          <p className="text-stone-400">{t.no_results}</p>
         </div>
       ) : (
         <div className="card overflow-hidden p-0">
           <div className="overflow-x-auto">
             <table className={`w-full text-sm ${isAr ? 'text-right' : 'text-left'}`}>
               <thead>
-                <tr className="border-b border-jamia-dark/10 bg-white">
+                <tr className="border-b border-white/10 bg-stone-900/50">
                   {[t.rank, t.student, t.institution, t.region, t.score].map((h) => (
                     <th
                       key={h}
-                      className={`px-5 py-4 font-semibold text-jamia-dark/70 uppercase tracking-wider text-xs ${
+                      className={`px-5 py-4 font-semibold text-stone-400 uppercase tracking-wider text-xs ${
                         isAr && h === t.score ? 'text-left' : ''
                       }`}
                     >
@@ -179,32 +179,32 @@ export default function LeaderboardClient({
                 {entries.map((entry, i) => (
                   <tr
                     key={entry.student_id}
-                    className={`border-b border-jamia-dark/10 transition-colors hover:bg-white ${
-                      i < 3 ? 'bg-jamia-gold/5' : ''
+                    className={`border-b border-white/5 transition-colors hover:bg-stone-800/50 ${
+                      i < 3 ? 'bg-[#c99335]/5' : ''
                     }`}
                   >
                     <td className="px-5 py-4">
                       <span className={`font-bold text-lg ${
                         entry.rank === 1 ? 'text-yellow-400' :
                         entry.rank === 2 ? 'text-slate-300' :
-                        entry.rank === 3 ? 'text-amber-600' : 'text-jamia-dark/80'
+                        entry.rank === 3 ? 'text-amber-600' : 'text-stone-300'
                       }`}>
                         {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank ?? '—'}
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className={`font-medium text-jamia-dark ${entry.consistency_flagged ? 'text-jamia-gold-hover' : ''}`}>
+                      <span className={`font-medium text-stone-200 ${entry.consistency_flagged ? 'text-[#e39e3b]' : ''}`}>
                         {entry.student_name}
                       </span>
                       {entry.consistency_flagged && (
                         <span className="ms-2 text-amber-500 text-xs" title={t.flagged}>⚠</span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-jamia-dark/70">{entry.institution_name}</td>
-                    <td className="px-5 py-4 text-jamia-dark/60 text-xs">
+                    <td className="px-5 py-4 text-stone-400">{entry.institution_name}</td>
+                    <td className="px-5 py-4 text-stone-500 text-xs">
                       {entry.region_name_en || '—'}
                     </td>
-                    <td className={`px-5 py-4 font-bold text-jamia-gold text-base ${isAr ? 'text-left' : 'text-right'}`}>
+                    <td className={`px-5 py-4 font-bold text-[#c99335] text-base ${isAr ? 'text-left' : 'text-right'}`}>
                       {entry.final_score.toFixed(1)}
                     </td>
                   </tr>

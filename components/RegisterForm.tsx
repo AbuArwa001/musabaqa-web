@@ -85,14 +85,14 @@ export default function RegisterForm({
 
   if (success) {
     return (
-      <div className="card text-center py-16 px-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="w-20 h-20 bg-jamia-emerald/10 text-jamia-emerald rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="card text-center py-16 px-8">
+        <div className="w-20 h-20 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
           <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-3xl font-bold text-jamia-dark mb-4">{t.success_title}</h2>
-        <p className="text-jamia-dark/70 text-lg leading-relaxed max-w-sm mx-auto">{t.success_body}</p>
+        <h2 className="font-serif text-3xl font-bold text-white mb-4">{t.success_title}</h2>
+        <p className="text-stone-400 text-lg leading-relaxed max-w-sm mx-auto">{t.success_body}</p>
         <Link
           href={`/${lang}/login`}
           className="btn-primary inline-flex items-center justify-center gap-2 mt-10 w-full sm:w-auto px-8"
@@ -106,7 +106,7 @@ export default function RegisterForm({
   const inputClass = `input-field w-full transition-all duration-300 ${isAr ? 'text-right' : ''}`
 
   return (
-    <div className="card p-8 sm:p-10 shadow-2xl border-jamia-gold/20 relative overflow-hidden bg-white/80 backdrop-blur-xl">
+    <div className="card p-8 sm:p-10 shadow-2xl border-[#c99335]/20 relative overflow-hidden">
       {/* Step Indicator */}
       <div className={`flex items-center justify-between mb-10 relative z-10 ${isAr ? 'flex-row-reverse' : ''}`}>
         {[1, 2, 3].map((s) => (
@@ -114,15 +114,15 @@ export default function RegisterForm({
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-500 ${
                 step >= s
-                  ? 'bg-jamia-emerald text-white shadow-lg shadow-jamia-emerald/30 scale-110'
-                  : 'bg-jamia-dark/5 text-jamia-dark/40'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 scale-110'
+                  : 'bg-white/5 text-stone-500 border border-white/10'
               }`}
             >
               {step > s ? '✓' : s}
             </div>
             {s < 3 && (
               <div className={`flex-1 h-1 mx-4 rounded-full transition-all duration-500 ${
-                step > s ? 'bg-jamia-emerald' : 'bg-jamia-dark/5'
+                step > s ? 'bg-emerald-600' : 'bg-white/5'
               }`} />
             )}
           </div>
@@ -134,8 +134,8 @@ export default function RegisterForm({
         {/* Step 1: Institution Details */}
         <div className={`space-y-6 transition-all duration-500 ${step === 1 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 h-0 overflow-hidden'}`}>
           <div className="text-center mb-8">
-            <h3 className="text-xl font-bold text-jamia-dark">{t.institution_name} & Details</h3>
-            <p className="text-jamia-dark/60 text-sm mt-1">Let's start with your institution's core details.</p>
+            <h3 className="font-serif text-xl font-bold text-white">{t.institution_name} & Details</h3>
+            <p className="text-stone-400 text-sm mt-1">Let's start with your institution's core details.</p>
           </div>
           <div>
             <label className="label">{t.institution_name}</label>
@@ -171,8 +171,8 @@ export default function RegisterForm({
         {/* Step 2: Contact Info */}
         <div className={`space-y-6 transition-all duration-500 ${step === 2 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 h-0 overflow-hidden'}`}>
           <div className="text-center mb-8">
-            <h3 className="text-xl font-bold text-jamia-dark">{t.contact_person}</h3>
-            <p className="text-jamia-dark/60 text-sm mt-1">Who should we reach out to for updates?</p>
+            <h3 className="font-serif text-xl font-bold text-white">{t.contact_person}</h3>
+            <p className="text-stone-400 text-sm mt-1">Who should we reach out to for updates?</p>
           </div>
           <div>
             <label className="label">{t.contact_person}</label>
@@ -202,8 +202,8 @@ export default function RegisterForm({
         {/* Step 3: Security */}
         <div className={`space-y-6 transition-all duration-500 ${step === 3 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 h-0 overflow-hidden'}`}>
           <div className="text-center mb-8">
-            <h3 className="text-xl font-bold text-jamia-dark">Security & Preferences</h3>
-            <p className="text-jamia-dark/60 text-sm mt-1">Set up your password and finish registration.</p>
+            <h3 className="font-serif text-xl font-bold text-white">Security & Preferences</h3>
+            <p className="text-stone-400 text-sm mt-1">Set up your password and finish registration.</p>
           </div>
           <div>
             <label className="label">{t.password}</label>
@@ -242,9 +242,9 @@ export default function RegisterForm({
         </div>
       </form>
 
-      <div className={`mt-8 pt-6 border-t border-jamia-dark/10 text-sm text-jamia-dark/50 text-center ${isAr ? 'text-right' : ''}`}>
+      <div className={`mt-8 pt-6 border-t border-white/5 text-sm text-stone-400 text-center ${isAr ? 'text-right' : ''}`}>
         {t.already_registered}{' '}
-        <Link href={`/${lang}/login`} className="text-jamia-gold font-semibold hover:text-jamia-gold-hover transition-colors">
+        <Link href={`/${lang}/login`} className="text-[#c99335] font-semibold hover:text-amber-300 transition-colors">
           {t.login_link}
         </Link>
       </div>
