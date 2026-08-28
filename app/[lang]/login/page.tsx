@@ -31,17 +31,17 @@ export default async function LoginPage(props: PageProps<'/[lang]/login'>) {
             <div className="absolute -inset-1 bg-gradient-to-r from-[#c99335] via-emerald-500 to-[#c99335] rounded-2xl blur-md opacity-40 animate-pulse" />
             <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1a1512] to-[#0a0807] border border-[#c99335]/40 flex items-center justify-center shadow-2xl">
               <span className="font-serif text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#e39e3b] via-[#c99335] to-[#fcf9f2]">
-                J
+                M
               </span>
             </div>
           </div>
           
           <div>
             <h1 className="font-serif text-3xl font-bold tracking-tight text-white">
-              Jamia Mosque <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c99335] to-amber-300">Nairobi</span>
+              Musabaqa <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c99335] to-amber-300">2025</span>
             </h1>
             <p className="text-xs text-[#c99335]/90 font-semibold uppercase tracking-widest mt-1">
-              {dict.login.title}
+              Jamia Mosque Nairobi
             </p>
           </div>
         </div>

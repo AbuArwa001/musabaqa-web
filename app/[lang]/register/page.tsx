@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
 import { isValidLocale, getDictionary } from '@/lib/dictionaries'
 import { listRegions } from '@/lib/api'
 import RegisterForm from '@/components/RegisterForm'
@@ -26,16 +25,36 @@ export default async function RegisterPage(props: PageProps<'/[lang]/register'>)
     regions = await listRegions()
   } catch {}
 
+  const isAr = lang === 'ar'
+
   return (
-    <div className="min-h-screen px-4 py-16">
+    <div className="min-h-screen px-4 pt-28 pb-16">
       <div className="max-w-lg mx-auto">
-        <div className="text-center mb-10">
-          <div className="flex justify-center mb-6">
-            <Image src="/images/jamia_logo.png" alt="Jamia Mosque Logo" width={80} height={80} className="w-20 h-20 object-contain drop-shadow-md" />
+        {/* Header */}
+        <div className={`text-center mb-10 ${isAr ? 'text-right' : ''}`}>
+          {/* Logo emblem */}
+          <div className="flex justify-center mb-8">
+            <div className="relative w-20 h-20 flex items-center justify-center">
+              <div className="absolute -inset-3 rounded-full bg-[#c99335]/10 blur-xl" />
+              <div className="relative w-20 h-20 bg-gradient-to-br from-[#1a1512] to-[#0a0807] border border-[#c99335]/40 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(201,147,53,0.1)]">
+                <span className="font-serif text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-[#e39e3b] via-[#c99335] to-[#fcf9f2]">
+                  {isAr ? 'م' : 'M'}
+                </span>
+              </div>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-jamia-dark mb-2">{dict.register.title}</h1>
-          <p className="text-jamia-dark/60">{dict.register.subtitle}</p>
+          {/* Gold divider label */}
+          <div className="inline-flex items-center justify-center gap-4 mb-4">
+            <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#c99335]/50" />
+            <span className="text-[#c99335] uppercase tracking-[0.3em] text-xs font-semibold font-sans">
+              {isAr ? 'مسجد جامع نيروبي' : 'Jamia Mosque Nairobi'}
+            </span>
+            <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#c99335]/50" />
+          </div>
+          <h1 className="font-serif text-3xl font-bold text-white mb-2">{dict.register.title}</h1>
+          <p className="text-stone-400">{dict.register.subtitle}</p>
         </div>
+
         <RegisterForm dict={dict} regions={regions} lang={lang} />
       </div>
     </div>
