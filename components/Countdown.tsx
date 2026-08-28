@@ -30,8 +30,8 @@ export default function Countdown({ label, target, dict, accent = 'green' }: Cou
 
   const colorClass = {
     green: 'text-emerald-400',
-    amber: 'text-jamia-gold',
-    gold: 'text-yellow-400',
+    amber: 'text-[#c99335]',
+    gold: 'text-yellow-300',
   }[accent]
 
   const units = [
@@ -42,15 +42,15 @@ export default function Countdown({ label, target, dict, accent = 'green' }: Cou
   ]
 
   return (
-    <div className="card text-center">
-      <p className="text-sm text-jamia-dark/60 mb-4 uppercase tracking-wider">{label}</p>
-      <div className="flex justify-center gap-3">
+    <div className="text-center">
+      <p className="text-xs text-stone-400 mb-4 uppercase tracking-[0.25em] font-semibold">{label}</p>
+      <div className="flex justify-center gap-4 sm:gap-6">
         {units.map(({ value, label: unitLabel }) => (
           <div key={unitLabel} className="flex flex-col items-center">
-            <span className={`text-3xl sm:text-4xl font-bold tabular-nums ${colorClass}`}>
+            <span className={`text-3xl sm:text-4xl font-bold tabular-nums font-serif ${colorClass}`}>
               {String(value).padStart(2, '0')}
             </span>
-            <span className="text-xs text-jamia-dark/50 mt-1">{unitLabel}</span>
+            <span className="text-[10px] text-stone-500 mt-1.5 uppercase tracking-widest">{unitLabel}</span>
           </div>
         ))}
       </div>
