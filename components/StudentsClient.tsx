@@ -317,8 +317,18 @@ export default function StudentsClient({
         try {
           const photoRes = await uploadStudentPhoto(token, savedStudent.id, photoFile)
           savedStudent.photo = photoRes.url
-        } catch (uploadErr) {
-          console.error('Failed to upload photo:', uploadErr)
+        } catch (uploadErr: any) {
+          const errDetail = uploadErr?.message || (isAr ? 'فشل رفع الصورة الشخصية إلى AWS S3' : 'Failed to upload passport photo to AWS S3')
+          setStatusModal({
+            type: 'error',
+            title: isAr ? 'فشل رفع الصورة الشخصية إلى AWS S3' : 'AWS S3 Photo Upload Failed',
+            message: errDetail,
+            subMessage: isAr
+              ? 'تم حفظ سجل المتسابق في قاعدة البيانات، ولكن تعذر نقل الصورة إلى سحابة التخزين AWS S3.'
+              : 'Candidate profile was saved, but the passport photo could not be uploaded to AWS S3 storage.',
+          })
+          setStudents((prev) => (editingId ? prev.map((s) => (s.id === editingId ? savedStudent : s)) : [...prev, savedStudent]))
+          return
         }
       }
 
@@ -331,8 +341,18 @@ export default function StudentsClient({
         try {
           const docRes = await uploadStudentIdDocument(token, savedStudent.id, idDocFile)
           savedStudent.id_document = docRes.url
-        } catch (uploadErr) {
-          console.error('Failed to upload ID document:', uploadErr)
+        } catch (uploadErr: any) {
+          const errDetail = uploadErr?.message || (isAr ? 'فشل رفع وثيقة إثبات الهوية إلى AWS S3' : 'Failed to upload ID document to AWS S3')
+          setStatusModal({
+            type: 'error',
+            title: isAr ? 'فشل رفع وثيقة الهوية إلى AWS S3' : 'AWS S3 Document Upload Failed',
+            message: errDetail,
+            subMessage: isAr
+              ? 'تم حفظ سجل المتسابق، ولكن تعذر نقل وتشفير وثيقة إثبات الهوية في سحابة AWS S3.'
+              : 'Candidate profile was saved, but the identification document could not be uploaded to AWS S3 storage.',
+          })
+          setStudents((prev) => (editingId ? prev.map((s) => (s.id === editingId ? savedStudent : s)) : [...prev, savedStudent]))
+          return
         }
       }
 

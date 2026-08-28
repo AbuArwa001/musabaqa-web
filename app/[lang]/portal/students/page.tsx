@@ -4,8 +4,10 @@ import { isValidLocale, getDictionary } from '@/lib/dictionaries'
 import { listStudents, listCategories, getMyInstitution } from '@/lib/api'
 import StudentsClient from '@/components/StudentsClient'
 
-export default async function StudentsPage(props: PageProps<'/[lang]/portal/students'>) {
-  const { lang } = await props.params
+export const dynamic = 'force-dynamic'
+
+export default async function StudentsPage({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params
   if (!isValidLocale(lang)) notFound()
 
   const store = await cookies()
