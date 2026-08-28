@@ -331,7 +331,7 @@ export default function VerificationClient({
 
                   {/* Preview Container */}
                   <div className="relative rounded-xl border border-gray-200/80 bg-gray-50 h-40 flex items-center justify-center overflow-hidden group">
-                    {isUploaded ? (
+                    {fileUrl ? (
                       slot.id === 'video' ? (
                         <div className="relative w-full h-full bg-black flex items-center justify-center">
                           <video src={fileUrl} className="w-full h-full object-cover opacity-75" />

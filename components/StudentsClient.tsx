@@ -337,16 +337,13 @@ export default function StudentsClient({
               </button>
             )
           ) : (
-            <button
-              onClick={() => {
-                setShowMediaHub(true)
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-              }}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-xl px-4 py-2.5 transition-all shadow-sm cursor-pointer self-start sm:self-auto"
+            <Link
+              href={`/${lang}/portal/verification`}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-xl px-4 py-2.5 transition-all shadow-sm self-start sm:self-auto"
             >
               <span>🔒</span>
               <span>{isAr ? 'إكمال ملف التوثيق للاعتماد ↗' : 'Complete Verification Dossier ↗'}</span>
-            </button>
+            </Link>
           )}
         </div>
 
