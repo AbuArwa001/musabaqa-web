@@ -238,6 +238,46 @@ export function getStudentPdfUrl(id: number): string {
   return `${API_URL}/api/v1/students/${id}/download_pdf/`
 }
 
+export async function uploadStudentPhoto(
+  token: string,
+  studentId: number,
+  file: File
+): Promise<{ s3_key: string; url: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const res = await fetch(`${API_URL}/api/v1/students/${studentId}/photo`, {
+    method: 'POST',
+    body: formData,
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiError(res.status, err.detail || 'Failed to upload student photo')
+  }
+  return res.json()
+}
+
+export async function uploadStudentIdDocument(
+  token: string,
+  studentId: number,
+  file: File
+): Promise<{ s3_key: string; url: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const res = await fetch(`${API_URL}/api/v1/students/${studentId}/id-document`, {
+    method: 'POST',
+    body: formData,
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiError(res.status, err.detail || 'Failed to upload student ID document')
+  }
+  return res.json()
+}
+
 // ─── Results ──────────────────────────────────────────────────────────────────
 
 export interface RoundResult {

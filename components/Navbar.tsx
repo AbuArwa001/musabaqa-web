@@ -43,9 +43,7 @@ export default function Navbar({ lang, dict, isLoggedIn = false }: NavbarProps) 
   const navLinks = [
     { name: dict.nav.home, href: `/${lang}` },
     { name: dict.nav.leaderboard, href: `/${lang}/leaderboard` },
-    ...(isLoggedIn
-      ? [{ name: isRTL ? 'بوابة المؤسسة' : 'Institution Portal', href: `/${lang}/portal/students` }]
-      : [{ name: dict.nav.login, href: `/${lang}/login` }]),
+    ...(!isLoggedIn ? [{ name: dict.nav.login, href: `/${lang}/login` }] : []),
   ]
 
   const renderLinkGroup = (links: { name: string; href: string }[]) =>
@@ -211,7 +209,7 @@ export default function Navbar({ lang, dict, isLoggedIn = false }: NavbarProps) 
             className="fixed top-[60px] left-0 w-full bg-[#1a1512]/98 backdrop-blur-2xl border-b border-[#c99335]/20 z-40 md:hidden overflow-hidden shadow-2xl"
           >
             <div className={`flex flex-col px-6 py-6 space-y-1 ${isRTL ? 'items-end' : ''}`}>
-              {[...navLinks, { name: dict.nav.register, href: `/${lang}/register` }].map((link) => {
+              {navLinks.map((link) => {
                 const isActive = pathname === link.href
                 return (
                   <Link
@@ -228,6 +226,35 @@ export default function Navbar({ lang, dict, isLoggedIn = false }: NavbarProps) 
                   </Link>
                 )
               })}
+
+              {isLoggedIn ? (
+                <div className="pt-2 space-y-2 w-full">
+                  <Link
+                    href={`/${lang}/portal/students`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-serif font-bold tracking-wider uppercase bg-emerald-700 text-white shadow-lg w-full text-center"
+                  >
+                    <span>🏛️</span>
+                    <span>{isRTL ? 'لوحة المؤسسة' : 'Return to Portal'}</span>
+                  </Link>
+                  <form action="/api/logout" method="POST" className="w-full">
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 px-4 text-xs font-semibold text-rose-300 bg-rose-950/30 rounded-xl hover:bg-rose-900/40 transition-colors"
+                    >
+                      {dict.nav.logout}
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <Link
+                  href={`/${lang}/register`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-3.5 px-4 rounded-xl text-sm font-serif tracking-[0.2em] uppercase text-[#c99335] hover:bg-white/5"
+                >
+                  {dict.nav.register}
+                </Link>
+              )}
 
               {/* Language switcher mobile */}
               <div className={`pt-4 border-t border-white/10 ${isRTL ? 'text-right' : ''}`}>

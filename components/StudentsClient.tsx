@@ -1,12 +1,20 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createStudent, updateStudent, getStudentPdfUrl, ApiError } from '@/lib/api'
+import {
+  createStudent,
+  updateStudent,
+  uploadStudentPhoto,
+  uploadStudentIdDocument,
+  getStudentPdfUrl,
+  ApiError,
+} from '@/lib/api'
 import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
@@ -21,6 +29,13 @@ interface Student {
   gender: 'MALE' | 'FEMALE'
   national_id: string
   guardian_phone: string
+  alternative_phone?: string | null
+  email?: string | null
+  nationality?: string | null
+  county?: string | null
+  residence?: string | null
+  photo?: string | null
+  id_document?: string | null
   review_status: ReviewStatus
   rejection_reason: string | null
   is_backup: boolean
@@ -57,6 +72,11 @@ const studentSchema = z.object({
   gender: z.enum(['MALE', 'FEMALE']),
   national_id: z.string().min(1, 'ID / Birth Certificate No. is required'),
   guardian_phone: z.string().min(1, 'Guardian contact phone is required'),
+  alternative_phone: z.string().optional(),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
+  nationality: z.string().optional(),
+  county: z.string().optional(),
+  residence: z.string().optional(),
   category_id: z.string().min(1, 'Please select a competition category'),
   is_backup: z.boolean().optional(),
 })
@@ -95,21 +115,28 @@ export default function StudentsClient({
   const tf = dict.student_form
   const isAr = lang === 'ar'
 
-  const [institution, setInstitution] = useState<Institution | null>(initialInst)
+  const [institution] = useState<Institution | null>(initialInst)
   const [students, setStudents] = useState<Student[]>(initialStudents)
   const [showForm, setShowForm] = useState(false)
   const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [serverError, setServerError] = useState('')
+  const [formUploadStatus, setFormUploadStatus] = useState<string | null>(null)
+
+  // Document verification file states for the active form
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [idDocFile, setIdDocFile] = useState<File | null>(null)
+  const [idDocPreview, setIdDocPreview] = useState<string | null>(null)
+
+  // Lightbox previews
+  const [activeMediaModal, setActiveMediaModal] = useState<{ title: string; url: string; isPdf?: boolean } | null>(null)
 
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } =
     useForm<StudentFormData>({ resolver: zodResolver(studentSchema) })
 
-  const selectedCatWatch = watch('category_id')
-  const filledCategoryIds = new Set(students.map((s) => s.category_id))
   const primaryStudents = students.filter((s) => !s.is_backup)
   const atCapacity = primaryStudents.length >= 4
-
   const isApproved = institution?.status === 'APPROVED'
 
   function openAddFormForCategory(catId?: number) {
@@ -123,12 +150,22 @@ export default function StudentsClient({
       gender: 'MALE',
       national_id: '',
       guardian_phone: '',
+      alternative_phone: '',
+      email: '',
+      nationality: 'Kenyan',
+      county: '',
+      residence: '',
       category_id: catId ? String(catId) : (categories[0] ? String(categories[0].id) : '1'),
       is_backup: false,
     })
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setIdDocFile(null)
+    setIdDocPreview(null)
     setEditingId(null)
     setShowForm(true)
     setServerError('')
+    setFormUploadStatus(null)
     setTimeout(() => document.getElementById('student-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
@@ -139,17 +176,45 @@ export default function StudentsClient({
       gender: student.gender,
       national_id: student.national_id,
       guardian_phone: student.guardian_phone,
+      alternative_phone: student.alternative_phone || '',
+      email: student.email || '',
+      nationality: student.nationality || 'Kenyan',
+      county: student.county || '',
+      residence: student.residence || '',
       category_id: String(student.category_id),
       is_backup: student.is_backup,
     })
+    setPhotoFile(null)
+    setPhotoPreview(student.photo || null)
+    setIdDocFile(null)
+    setIdDocPreview(student.id_document || null)
     setEditingId(student.id)
     setShowForm(true)
     setServerError('')
+    setFormUploadStatus(null)
     setTimeout(() => document.getElementById('student-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setPhotoFile(file)
+      setPhotoPreview(URL.createObjectURL(file))
+    }
+  }
+
+  const handleIdDocSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setIdDocFile(file)
+      setIdDocPreview(file.name)
+    }
   }
 
   async function onSubmit(data: StudentFormData) {
     setServerError('')
+    setFormUploadStatus(isAr ? 'جاري حفظ بيانات المرشح...' : 'Saving candidate profile…')
+
     try {
       const payload = {
         institution_id: institution!.id,
@@ -159,15 +224,50 @@ export default function StudentsClient({
         gender: data.gender,
         national_id: data.national_id,
         guardian_phone: data.guardian_phone,
+        alternative_phone: data.alternative_phone || undefined,
+        email: data.email || undefined,
+        nationality: data.nationality || 'Kenyan',
+        county: data.county || undefined,
+        residence: data.residence || undefined,
         is_backup: data.is_backup || false,
       }
+
+      let savedStudent: Student
       if (editingId) {
-        const updated = await updateStudent(token, editingId, payload)
-        setStudents((prev) => prev.map((s) => (s.id === editingId ? (updated as Student) : s)))
+        savedStudent = (await updateStudent(token, editingId, payload)) as Student
       } else {
-        const created = await createStudent(token, payload)
-        setStudents((prev) => [...prev, created as Student])
+        savedStudent = (await createStudent(token, payload)) as Student
       }
+
+      // Upload passport photo to AWS S3 if provided
+      if (photoFile) {
+        setFormUploadStatus(isAr ? 'جاري رفع الصورة الشخصية إلى السحابة...' : 'Uploading candidate passport photo to AWS S3…')
+        try {
+          const photoRes = await uploadStudentPhoto(token, savedStudent.id, photoFile)
+          savedStudent.photo = photoRes.url
+        } catch (uploadErr) {
+          console.error('Failed to upload photo:', uploadErr)
+        }
+      }
+
+      // Upload ID document (birth cert/ID/passport) to AWS S3 if provided
+      if (idDocFile) {
+        setFormUploadStatus(isAr ? 'جاري رفع وثيقة إثبات الهوية إلى السحابة...' : 'Uploading identification document to AWS S3…')
+        try {
+          const docRes = await uploadStudentIdDocument(token, savedStudent.id, idDocFile)
+          savedStudent.id_document = docRes.url
+        } catch (uploadErr) {
+          console.error('Failed to upload ID document:', uploadErr)
+        }
+      }
+
+      // Update local state list
+      if (editingId) {
+        setStudents((prev) => prev.map((s) => (s.id === editingId ? savedStudent : s)))
+      } else {
+        setStudents((prev) => [...prev, savedStudent])
+      }
+
       setShowForm(false)
       reset()
     } catch (err: any) {
@@ -177,6 +277,8 @@ export default function StudentsClient({
       } else {
         setServerError(err.message || dict.common.error)
       }
+    } finally {
+      setFormUploadStatus(null)
     }
   }
 
@@ -191,36 +293,28 @@ export default function StudentsClient({
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `REF_${String(student.id).padStart(5, '0')}_${student.full_name.replace(/\s+/g, '_')}_Dossier.pdf`
+        a.download = `REF_${String(student.id).padStart(5, '0')}_${student.full_name.replace(/\s+/g, '_')}_Pass.pdf`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
       } else {
-        alert(isAr ? 'فشل تحميل ملف المرشح' : 'Failed to download candidate dossier PDF')
+        alert(isAr ? 'فشل تحميل بطاقة المرشح' : 'Failed to download candidate exam pass')
       }
     } catch (e) {
       console.error(e)
-      alert(isAr ? 'حدث خطأ أثناء تحميل الملف' : 'An error occurred downloading dossier')
+      alert(isAr ? 'حدث خطأ أثناء تحميل الملف' : 'An error occurred downloading pass')
     } finally {
       setDownloadingPdfId(null)
     }
   }
 
-  const uploadedMediaCount = [
-    institution?.document_url,
-    institution?.teacher_photo_url,
-    institution?.classroom_photo_url,
-    institution?.students_photo_url,
-    institution?.video_url,
-  ].filter(Boolean).length
-
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 max-w-7xl mx-auto font-sans select-none" dir={isAr ? 'rtl' : 'ltr'}>
 
       {/* ── 1. Master Accreditation & Institution Status Banner ── */}
       {institution && (
-        <div className="admin-card overflow-hidden bg-white border border-gray-200/80 rounded-2xl shadow-sm hover:shadow transition-shadow">
+        <div className="admin-card overflow-hidden bg-white border border-gray-200/80 rounded-3xl shadow-sm hover:shadow transition-shadow">
           <div className={`p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5 ${isAr ? 'lg:flex-row-reverse text-right' : ''}`}>
             
             {/* Left: Emblem & Institution Info */}
@@ -358,7 +452,7 @@ export default function StudentsClient({
                 return (
                   <div
                     key={cat.id}
-                    className={`rounded-2xl border p-5 flex flex-col justify-between transition-all duration-300 ${
+                    className={`rounded-3xl border p-5 flex flex-col justify-between transition-all duration-300 ${
                       student
                         ? 'bg-white border-emerald-300 shadow-sm hover:shadow-md'
                         : 'bg-white/60 border-dashed border-gray-300 hover:border-emerald-400 hover:bg-emerald-50/20'
@@ -385,15 +479,46 @@ export default function StudentsClient({
 
                       {/* Filled Student Card Inside Slot */}
                       {student ? (
-                        <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-200/80 space-y-2.5">
+                        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200/80 space-y-3">
                           <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                              {student.full_name.charAt(0).toUpperCase()}
+                            {/* Candidate Face Photo or Initial */}
+                            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-sm border border-emerald-200">
+                              {student.photo ? (
+                                <Image
+                                  src={student.photo}
+                                  alt={student.full_name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              ) : (
+                                student.full_name.charAt(0).toUpperCase()
+                              )}
                             </div>
+                            
                             <div className="min-w-0 flex-1">
-                              <h4 className="font-bold text-xs text-gray-900 truncate">{student.full_name}</h4>
+                              <h4 className="font-bold text-xs sm:text-sm text-gray-900 truncate">{student.full_name}</h4>
                               <p className="text-[10px] text-gray-500 font-mono">REF-{String(student.id).padStart(4, '0')}</p>
                             </div>
+                          </div>
+
+                          {/* Verification Badges */}
+                          <div className={`flex items-center gap-1.5 flex-wrap text-[10px] ${isAr ? 'flex-row-reverse' : ''}`}>
+                            <span className="bg-white border border-gray-200 px-2 py-0.5 rounded font-mono text-gray-600">
+                              🪪 {student.national_id}
+                            </span>
+                            {student.id_document ? (
+                              <button
+                                type="button"
+                                onClick={() => setActiveMediaModal({ title: `ID Document — ${student.full_name}`, url: student.id_document!, isPdf: student.id_document!.endsWith('.pdf') })}
+                                className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-semibold hover:bg-emerald-100 cursor-pointer"
+                              >
+                                🪪 ID Doc ✓
+                              </button>
+                            ) : (
+                              <span className="text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                                ID Pending
+                              </span>
+                            )}
                           </div>
 
                           <div className={`flex items-center justify-between text-[11px] pt-2 border-t border-gray-200 ${isAr ? 'flex-row-reverse' : ''}`}>
@@ -402,7 +527,7 @@ export default function StudentsClient({
                           </div>
 
                           {backupStudent && (
-                            <div className="text-[10px] text-sky-700 bg-sky-50 px-2 py-1 rounded-md border border-sky-200">
+                            <div className="text-[10px] text-sky-700 bg-sky-50 px-2.5 py-1.5 rounded-xl border border-sky-200">
                               <strong>{t.backup_badge}:</strong> {backupStudent.full_name}
                             </div>
                           )}
@@ -427,7 +552,7 @@ export default function StudentsClient({
                             type="button"
                             onClick={() => handleDownloadPdf(student)}
                             disabled={downloadingPdfId === student.id}
-                            className="inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-1.5 rounded-lg flex-1 transition-colors cursor-pointer"
+                            className="inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-1.5 rounded-xl flex-1 transition-colors cursor-pointer"
                           >
                             <span>📄</span>
                             <span>{downloadingPdfId === student.id ? '...' : 'PDF Pass'}</span>
@@ -435,7 +560,7 @@ export default function StudentsClient({
                           <button
                             type="button"
                             onClick={() => openEditForm(student)}
-                            className="inline-flex items-center justify-center text-[11px] font-semibold text-gray-700 hover:text-emerald-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                            className="inline-flex items-center justify-center text-[11px] font-semibold text-gray-700 hover:text-emerald-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
                           >
                             {t.edit_student}
                           </button>
@@ -491,7 +616,7 @@ export default function StudentsClient({
         </div>
       </div>
 
-      {/* ── 3. Add / Edit Candidate Form Drawer ── */}
+      {/* ── 3. Ultra-Premium Candidate Registration & Verification Form ── */}
       <AnimatePresence>
         {showForm && (
           <motion.div
@@ -499,129 +624,282 @@ export default function StudentsClient({
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="admin-card border-2 border-emerald-600/50 shadow-xl bg-gradient-to-b from-white to-gray-50/50 rounded-2xl overflow-hidden"
+            className="admin-card border-2 border-emerald-600/40 shadow-2xl bg-gradient-to-b from-white via-white to-gray-50 rounded-3xl overflow-hidden"
           >
-            <div className="admin-card-header bg-emerald-50/60 border-b border-emerald-100 p-5 flex items-center justify-between">
+            {/* Form Header */}
+            <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-950 text-white p-6 sm:p-7 flex items-center justify-between">
               <div>
-                <h3 className="font-serif text-lg font-bold text-gray-900">
-                  {editingId ? (isAr ? 'تعديل بيانات المرشح' : 'Edit Candidate Profile') : (isAr ? 'تسجيل مرشح جديد' : 'Register Candidate for Musabaqa')}
+                <span className="text-[11px] font-bold text-[#c99335] uppercase tracking-widest block font-mono">
+                  {isAr ? 'استمارة التسجيل والتوثيق الرسمية' : 'Official Candidate Registration & Verification Dossier'}
+                </span>
+                <h3 className="font-serif text-lg sm:text-xl font-bold mt-1">
+                  {editingId ? (isAr ? 'تعديل بيانات وملفات المتسابق' : 'Edit Candidate & Verification Files') : (isAr ? 'تسجيل متسابق جديد ورفع ملفات الإثبات' : 'Register Candidate & Upload Verification Files')}
                 </h3>
-                <p className="text-gray-500 text-xs mt-0.5">
-                  {isAr ? 'يرجى إدخال البيانات مطابقة لشهادة الميلاد أو الهوية الوطنية' : 'Ensure candidate full name and date of birth match their official identification.'}
-                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="text-gray-400 hover:text-gray-700 text-xl font-bold p-1"
+                className="text-stone-300 hover:text-white text-2xl font-bold p-1 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-6 sm:p-8">
               {serverError && (
-                <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl flex items-center gap-2">
+                <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-2xl flex items-center gap-2">
                   <span className="text-base">⚠️</span>
                   <span>{serverError}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  
-                  {/* Full Name */}
-                  <div className="md:col-span-2">
-                    <label className="admin-label">{tf.full_name} *</label>
-                    <input
-                      {...register('full_name')}
-                      type="text"
-                      className={`admin-input ${isAr ? 'text-right' : ''}`}
-                      placeholder="e.g. Abdurrahman Bilal Othman"
-                    />
-                    {errors.full_name && <p className="admin-error">{errors.full_name.message}</p>}
-                  </div>
+              {formUploadStatus && (
+                <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-2xl flex items-center gap-3">
+                  <div className="w-5 h-5 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin shrink-0" />
+                  <span className="font-semibold">{formUploadStatus}</span>
+                </div>
+              )}
 
-                  {/* Category Selection */}
-                  <div>
-                    <label className="admin-label">{tf.category} *</label>
-                    <select {...register('category_id')} className={`admin-select ${isAr ? 'text-right' : ''}`}>
-                      {categories.map((c) => (
-                        <option key={c.id} value={String(c.id)}>
-                          {isAr ? c.name_ar : c.name_en} ({c.min_age ? `${c.min_age}–` : ''}{c.max_age} Yrs)
-                        </option>
-                      ))}
-                    </select>
-                    {errors.category_id && <p className="admin-error">{errors.category_id.message}</p>}
-                  </div>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" noValidate>
+                
+                {/* ── Section A: Candidate Verification Files (Passport Photo & Identification Document) ── */}
+                <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-5 sm:p-6">
+                  <h4 className="font-serif font-bold text-sm text-gray-900 mb-1 flex items-center gap-2">
+                    <span>🛡️</span>
+                    <span>{isAr ? 'وثائق التحقق وهوية المتسابق (الحفظ في AWS)' : 'Candidate Verification Files (AWS S3 Storage)'}</span>
+                  </h4>
+                  <p className="text-xs text-gray-500 mb-5">
+                    {isAr
+                      ? 'يتم تخزين الصورة الشخصية وهوية المرشح بأمان في AWS S3 لتسهيل مطابقتها وتوليد بطاقة الامتحان.'
+                      : 'Candidate passport photo and ID document are securely stored in AWS S3 and attached to the candidate dossier.'}
+                  </p>
 
-                  {/* Gender Selection */}
-                  <div>
-                    <label className="admin-label">{tf.gender} *</label>
-                    <select {...register('gender')} className={`admin-select ${isAr ? 'text-right' : ''}`}>
-                      <option value="MALE">{tf.gender_male}</option>
-                      <option value="FEMALE">{tf.gender_female}</option>
-                    </select>
-                    {errors.gender && <p className="admin-error">{errors.gender.message}</p>}
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    {/* 1. Passport Photo */}
+                    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between hover:border-emerald-400 transition-all">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                            <span>📸</span>
+                            <span>{isAr ? 'الصورة الشخصية للمتسابق' : 'Candidate Passport Photo'}</span>
+                          </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            photoPreview ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {photoPreview ? 'Selected ✓' : 'Optional'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 mb-3">Formal portrait (.jpg, .png, max 5MB)</p>
 
-                  {/* Date of Birth */}
-                  <div>
-                    <label className="admin-label">{tf.dob} *</label>
-                    <input
-                      {...register('dob')}
-                      type="date"
-                      className={`admin-input ${isAr ? 'text-right' : ''}`}
-                    />
-                    {errors.dob && <p className="admin-error">{errors.dob.message}</p>}
-                  </div>
+                        {/* Preview Box */}
+                        <div className="relative w-24 h-24 rounded-xl border border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center mx-auto mb-3">
+                          {photoPreview ? (
+                            <Image src={photoPreview} alt="Candidate Photo" fill className="object-cover" />
+                          ) : (
+                            <span className="text-2xl text-gray-300">👤</span>
+                          )}
+                        </div>
+                      </div>
 
-                  {/* National ID / Birth Cert Ref */}
-                  <div>
-                    <label className="admin-label">{isAr ? 'رقم الهوية / شهادة الميلاد' : 'National ID / Birth Cert No.'} *</label>
-                    <input
-                      {...register('national_id')}
-                      type="text"
-                      className={`admin-input ${isAr ? 'text-right' : ''}`}
-                      placeholder="e.g. BC-9847294 / ID-3829104"
-                    />
-                    {errors.national_id && <p className="admin-error">{errors.national_id.message}</p>}
-                  </div>
+                      <label className="btn-secondary !py-1.5 text-xs text-center cursor-pointer hover:bg-emerald-50 hover:text-emerald-800 flex items-center justify-center gap-1">
+                        <span>⬆️</span>
+                        <span>{photoPreview ? (isAr ? 'تغيير الصورة' : 'Change Photo') : (isAr ? 'اختيار صورة' : 'Choose Passport Photo')}</span>
+                        <input type="file" accept="image/jpeg,image/png,image/jpg" className="hidden" onChange={handlePhotoSelect} />
+                      </label>
+                    </div>
 
-                  {/* Guardian Phone */}
-                  <div className="md:col-span-2">
-                    <label className="admin-label">{tf.guardian_phone} *</label>
-                    <input
-                      {...register('guardian_phone')}
-                      type="tel"
-                      className={`admin-input ${isAr ? 'text-right' : ''}`}
-                      placeholder="+254 7XX XXX XXX"
-                    />
-                    {errors.guardian_phone && <p className="admin-error">{errors.guardian_phone.message}</p>}
-                  </div>
+                    {/* 2. Identification Document */}
+                    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between hover:border-sky-400 transition-all">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                            <span>🪪</span>
+                            <span>{isAr ? 'وثيقة إثبات الهوية (ميلاد / هوية / جواز)' : 'Identification Document'}</span>
+                          </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            idDocPreview ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {idDocPreview ? 'Selected ✓' : 'Optional'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 mb-3">Birth Certificate, ID Card or Passport (.pdf, .jpg, .png)</p>
 
-                  {/* Backup / Reserve Contestant Toggle */}
-                  <div className="md:col-span-2 bg-amber-50/70 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                    <input
-                      {...register('is_backup')}
-                      type="checkbox"
-                      id="is_backup_check"
-                      className="mt-1 w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 cursor-pointer"
-                    />
-                    <label htmlFor="is_backup_check" className="text-xs text-amber-900 cursor-pointer">
-                      <span className="font-bold block">{t.backup_badge} (Reserve Contestant)</span>
-                      <span className="text-amber-700">Check this box if this student is a standby replacement contestant for this category.</span>
-                    </label>
-                  </div>
+                        {/* Document Status Box */}
+                        <div className="rounded-xl border border-gray-200 bg-gray-50 h-24 flex flex-col items-center justify-center p-3 text-center mb-3">
+                          {idDocPreview ? (
+                            <>
+                              <span className="text-xl">📄</span>
+                              <span className="text-xs font-bold text-emerald-800 truncate max-w-full mt-1">
+                                {idDocPreview.startsWith('http') ? 'ID Document Uploaded' : idDocPreview}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-xl text-gray-300">🪪</span>
+                              <span className="text-[11px] text-gray-400 mt-1">No document selected</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
 
+                      <label className="btn-secondary !py-1.5 text-xs text-center cursor-pointer hover:bg-sky-50 hover:text-sky-800 flex items-center justify-center gap-1">
+                        <span>⬆️</span>
+                        <span>{idDocPreview ? (isAr ? 'تغيير الوثيقة' : 'Change Document') : (isAr ? 'اختيار الوثيقة' : 'Attach Birth Cert / ID')}</span>
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" className="hidden" onChange={handleIdDocSelect} />
+                      </label>
+                    </div>
+
+                  </div>
                 </div>
 
-                {/* Form Buttons */}
+                {/* ── Section B: Candidate Profile & Demographic Details ── */}
+                <div className="space-y-4">
+                  <h4 className="font-serif font-bold text-sm text-gray-900 flex items-center gap-2">
+                    <span>📋</span>
+                    <span>{isAr ? 'البيانات الشخصية للمتسابق' : 'Candidate Personal & Identification Data'}</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    {/* Full Name */}
+                    <div className="md:col-span-2">
+                      <label className="admin-label">{tf.full_name} *</label>
+                      <input
+                        {...register('full_name')}
+                        type="text"
+                        className={`admin-input ${isAr ? 'text-right' : ''}`}
+                        placeholder="e.g. Abdurrahman Bilal Othman / عبد الرحمن بلال عثمان"
+                      />
+                      {errors.full_name && <p className="admin-error">{errors.full_name.message}</p>}
+                    </div>
+
+                    {/* Category Selection */}
+                    <div>
+                      <label className="admin-label">{tf.category} *</label>
+                      <select {...register('category_id')} className={`admin-select ${isAr ? 'text-right' : ''}`}>
+                        {categories.map((c) => (
+                          <option key={c.id} value={String(c.id)}>
+                            {isAr ? c.name_ar : c.name_en} ({c.min_age ? `${c.min_age}–` : ''}{c.max_age} Yrs)
+                          </option>
+                        ))}
+                      </select>
+                      {errors.category_id && <p className="admin-error">{errors.category_id.message}</p>}
+                    </div>
+
+                    {/* Gender Selection */}
+                    <div>
+                      <label className="admin-label">{tf.gender} *</label>
+                      <select {...register('gender')} className={`admin-select ${isAr ? 'text-right' : ''}`}>
+                        <option value="MALE">{tf.gender_male}</option>
+                        <option value="FEMALE">{tf.gender_female}</option>
+                      </select>
+                      {errors.gender && <p className="admin-error">{errors.gender.message}</p>}
+                    </div>
+
+                    {/* Date of Birth */}
+                    <div>
+                      <label className="admin-label">{tf.dob} *</label>
+                      <input
+                        {...register('dob')}
+                        type="date"
+                        className={`admin-input ${isAr ? 'text-right' : ''}`}
+                      />
+                      {errors.dob && <p className="admin-error">{errors.dob.message}</p>}
+                    </div>
+
+                    {/* National ID / Birth Cert Ref */}
+                    <div>
+                      <label className="admin-label">{isAr ? 'رقم الهوية / شهادة الميلاد' : 'National ID / Birth Cert No.'} *</label>
+                      <input
+                        {...register('national_id')}
+                        type="text"
+                        className={`admin-input ${isAr ? 'text-right' : ''}`}
+                        placeholder="e.g. BC-9847294 / ID-3829104"
+                      />
+                      {errors.national_id && <p className="admin-error">{errors.national_id.message}</p>}
+                    </div>
+
+                    {/* Nationality */}
+                    <div>
+                      <label className="admin-label">{isAr ? 'الجنسية' : 'Nationality'}</label>
+                      <input
+                        {...register('nationality')}
+                        type="text"
+                        className={`admin-input ${isAr ? 'text-right' : ''}`}
+                        placeholder="Kenyan"
+                      />
+                    </div>
+
+                    {/* County */}
+                    <div>
+                      <label className="admin-label">{isAr ? 'المحافظة / المقاطعة' : 'County of Residence'}</label>
+                      <input
+                        {...register('county')}
+                        type="text"
+                        className={`admin-input ${isAr ? 'text-right' : ''}`}
+                        placeholder="e.g. Nairobi / Mombasa / Garissa"
+                      />
+                    </div>
+
+                    {/* Primary Guardian Phone */}
+                    <div>
+                      <label className="admin-label">{tf.guardian_phone} *</label>
+                      <input
+                        {...register('guardian_phone')}
+                        type="tel"
+                        className={`admin-input ${isAr ? 'text-right' : ''}`}
+                        placeholder="+254 7XX XXX XXX"
+                      />
+                      {errors.guardian_phone && <p className="admin-error">{errors.guardian_phone.message}</p>}
+                    </div>
+
+                    {/* Alternative / Teacher Phone */}
+                    <div>
+                      <label className="admin-label">{isAr ? 'هاتف الشيخ / رقم بديل' : 'Teacher / Alternative Phone'}</label>
+                      <input
+                        {...register('alternative_phone')}
+                        type="tel"
+                        className={`admin-input ${isAr ? 'text-right' : ''}`}
+                        placeholder="+254 7XX XXX XXX"
+                      />
+                    </div>
+
+                    {/* Guardian Email */}
+                    <div className="md:col-span-2">
+                      <label className="admin-label">{isAr ? 'البريد الإلكتروني لولي الأمر (اختياري)' : 'Guardian Email (Optional)'}</label>
+                      <input
+                        {...register('email')}
+                        type="email"
+                        className={`admin-input ${isAr ? 'text-right' : ''}`}
+                        placeholder="guardian@example.com"
+                      />
+                      {errors.email && <p className="admin-error">{errors.email.message}</p>}
+                    </div>
+
+                    {/* Backup / Reserve Contestant Toggle */}
+                    <div className="md:col-span-2 bg-amber-50/70 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                      <input
+                        {...register('is_backup')}
+                        type="checkbox"
+                        id="is_backup_check"
+                        className="mt-1 w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <label htmlFor="is_backup_check" className="text-xs text-amber-900 cursor-pointer">
+                        <span className="font-bold block">{t.backup_badge} (Reserve Candidate)</span>
+                        <span className="text-amber-700">Check this box if this student is a standby replacement contestant for this category.</span>
+                      </label>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Form Action Buttons */}
                 <div className={`pt-4 border-t border-gray-200 flex items-center justify-end gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="btn-secondary text-xs px-4 py-2"
+                    className="btn-secondary text-xs px-5 py-2.5 rounded-xl cursor-pointer"
                   >
                     {dict.common.cancel}
                   </button>
@@ -629,11 +907,12 @@ export default function StudentsClient({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="portal-btn-primary text-xs px-6 py-2.5 shadow-md flex items-center gap-2 cursor-pointer"
+                    className="portal-btn-primary text-xs px-7 py-3 rounded-xl shadow-lg flex items-center gap-2 cursor-pointer font-bold"
                   >
-                    {isSubmitting ? 'Saving Candidate…' : (editingId ? 'Update Candidate Profile' : 'Save & Enroll Candidate')}
+                    {isSubmitting ? 'Saving to Cloud…' : (editingId ? 'Update Candidate & Files' : 'Save & Register Candidate')}
                   </button>
                 </div>
+
               </form>
             </div>
           </motion.div>
@@ -642,10 +921,10 @@ export default function StudentsClient({
 
       {/* ── 4. Detailed Enrolled Candidates Roster Table ── */}
       {students.length > 0 && (
-        <div className="admin-card overflow-hidden p-0 border border-gray-200 shadow-sm">
-          <div className="p-5 bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200 flex items-center justify-between">
+        <div className="admin-card overflow-hidden p-0 border border-gray-200 shadow-sm rounded-3xl">
+          <div className="p-5 sm:p-6 bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200 flex items-center justify-between">
             <div>
-              <h4 className="font-serif font-bold text-base text-gray-900">
+              <h4 className="font-serif font-bold text-base sm:text-lg text-gray-900">
                 {isAr ? 'كشف بيانات المرشحين وبطاقات الامتحان' : 'Enrolled Candidates Dossier & Examination Passes'}
               </h4>
               <p className="text-xs text-gray-500 mt-0.5">
@@ -664,7 +943,7 @@ export default function StudentsClient({
                   <th className="px-5 py-3.5">#</th>
                   <th className="px-5 py-3.5">{isAr ? 'اسم المرشح' : 'Candidate Name'}</th>
                   <th className="px-5 py-3.5">{isAr ? 'الفئة' : 'Category'}</th>
-                  <th className="px-5 py-3.5">{isAr ? 'رقم الهوية' : 'ID / Birth Cert'}</th>
+                  <th className="px-5 py-3.5">{isAr ? 'رقم الهوية والوثيقة' : 'ID & Document'}</th>
                   <th className="px-5 py-3.5">{isAr ? 'حالة المراجعة' : 'Screening Status'}</th>
                   <th className={`px-5 py-3.5 ${isAr ? 'text-left' : 'text-right'}`}>{isAr ? 'الإجراءات' : 'Actions'}</th>
                 </tr>
@@ -680,8 +959,13 @@ export default function StudentsClient({
 
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                            {student.full_name.charAt(0).toUpperCase()}
+                          {/* Face Avatar */}
+                          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm border border-emerald-200">
+                            {student.photo ? (
+                              <Image src={student.photo} alt={student.full_name} fill className="object-cover" />
+                            ) : (
+                              student.full_name.charAt(0).toUpperCase()
+                            )}
                           </div>
                           <div>
                             <span className="font-bold text-gray-900 block">{student.full_name}</span>
@@ -704,8 +988,19 @@ export default function StudentsClient({
                       </td>
 
                       <td className="px-5 py-4 font-mono text-gray-600 text-xs">
-                        {student.national_id}
-                        <span className="block text-[10px] text-gray-400 font-sans">📞 {student.guardian_phone}</span>
+                        <div className="flex items-center gap-2">
+                          <span>{student.national_id}</span>
+                          {student.id_document && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveMediaModal({ title: `ID Document — ${student.full_name}`, url: student.id_document!, isPdf: student.id_document!.endsWith('.pdf') })}
+                              className="text-[10px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded font-semibold cursor-pointer"
+                            >
+                              🪪 View Doc
+                            </button>
+                          )}
+                        </div>
+                        <span className="block text-[10px] text-gray-400 font-sans mt-0.5">📞 {student.guardian_phone}</span>
                       </td>
 
                       <td className="px-5 py-4 whitespace-nowrap">
@@ -721,15 +1016,15 @@ export default function StudentsClient({
                             type="button"
                             onClick={() => handleDownloadPdf(student)}
                             disabled={downloadingPdfId === student.id}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-lg transition-colors shadow-sm cursor-pointer"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-xl transition-colors shadow-sm cursor-pointer"
                           >
                             <span>📄</span>
-                            <span>{downloadingPdfId === student.id ? '...' : 'PDF Dossier'}</span>
+                            <span>{downloadingPdfId === student.id ? '...' : 'PDF Pass'}</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => openEditForm(student)}
-                            className="text-xs font-semibold text-gray-700 hover:text-emerald-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                            className="text-xs font-semibold text-gray-700 hover:text-emerald-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
                           >
                             {t.edit_student}
                           </button>
@@ -743,6 +1038,42 @@ export default function StudentsClient({
           </div>
         </div>
       )}
+
+      {/* ── 5. Media Lightbox Preview Modal ── */}
+      <AnimatePresence>
+        {activeMediaModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[#1a1512] rounded-3xl overflow-hidden max-w-4xl w-full border border-white/20 shadow-2xl"
+            >
+              <div className="p-4 bg-[#120e0c] border-b border-white/10 flex items-center justify-between text-white">
+                <span className="font-serif font-bold text-sm">🪪 {activeMediaModal.title}</span>
+                <button
+                  onClick={() => setActiveMediaModal(null)}
+                  className="text-stone-400 hover:text-white text-lg font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="relative w-full h-[70vh] bg-black flex items-center justify-center">
+                {activeMediaModal.isPdf ? (
+                  <iframe src={activeMediaModal.url} className="w-full h-full" />
+                ) : (
+                  <Image
+                    src={activeMediaModal.url}
+                    alt={activeMediaModal.title}
+                    fill
+                    className="object-contain"
+                  />
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   )
