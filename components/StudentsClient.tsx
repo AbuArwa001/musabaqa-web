@@ -262,13 +262,13 @@ export default function StudentsClient({
             {/* Left: Emblem & Institution Info */}
             <div className={`flex items-start gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
-                institution.status === 'APPROVED'
+                isApproved
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   : institution.status === 'REJECTED'
                   ? 'bg-rose-50 text-rose-700 border border-rose-200'
                   : 'bg-amber-50 text-amber-700 border border-amber-200'
               }`}>
-                {institution.status === 'APPROVED' ? (
+                {isApproved ? (
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
@@ -289,13 +289,13 @@ export default function StudentsClient({
                     {institution.name}
                   </h2>
                   <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
-                    institution.status === 'APPROVED'
+                    isApproved
                       ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                       : institution.status === 'REJECTED'
                       ? 'bg-rose-100 text-rose-800 border border-rose-300'
                       : 'bg-amber-100 text-amber-800 border border-amber-300'
                   }`}>
-                    {institution.status === 'APPROVED'
+                    {isApproved
                       ? (isAr ? '✓ مؤسسة معتمدة رسمياً' : '✓ Verified & Accredited')
                       : institution.status === 'REJECTED'
                       ? (isAr ? '✗ الطلب مرفوض' : '✗ Application Rejected')
@@ -304,192 +304,37 @@ export default function StudentsClient({
                 </div>
 
                 <p className="text-gray-600 text-xs sm:text-sm mt-1 leading-relaxed max-w-2xl">
-                  {institution.status === 'APPROVED'
+                  {isApproved
                     ? (isAr
                         ? 'تم اعتماد مؤسستكم رسميًا من قبل لجنة مسجد جامع نيروبي للمشاركة في مسابقة حفظ القرآن الكريم ٢٠٢٦.'
                         : 'Your madrasa has been officially accredited by Jamia Mosque Committee for the 2026 Musabaqa.')
                     : (isAr
-                        ? 'تقوم اللجنة بمراجعة بيانات المؤسسة. يمكنك تسجيل مرشحيك الـ ٤ وتجهيز ملفاتهم في هذه الأثناء.'
-                        : 'Accreditation review is underway. You can register your 4 student candidates and upload media in the meantime.')}
+                        ? 'تقوم اللجنة بمراجعة بيانات المؤسسة. يرجى استكمال ملف التوثيق والوسائط لفتح تسجيل المرشحين.'
+                        : 'Accreditation review is underway. Complete your verification media dossier to unlock candidate enrolment.')}
                 </p>
               </div>
             </div>
 
-            {/* Right: Media Hub Toggle & Reference */}
+            {/* Right: Direct Link to Dedicated Verification Page */}
             <div className={`flex items-center gap-3 shrink-0 ${isAr ? 'flex-row-reverse' : ''}`}>
-              <button
-                type="button"
-                onClick={() => setShowMediaHub(!showMediaHub)}
-                className="text-xs font-bold px-4 py-2.5 rounded-xl border border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+              <Link
+                href={`/${lang}/portal/verification`}
+                className={`text-xs font-bold px-4 py-2.5 rounded-xl border transition-all flex items-center gap-2 shadow-sm ${
+                  isApproved
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                    : 'border-amber-500 bg-amber-500 text-white hover:bg-amber-600 animate-pulse'
+                }`}
               >
-                <span>📁</span>
-                <span>{showMediaHub ? (isAr ? 'إخفاء ملف التوثيق ▲' : 'Hide Media Hub ▲') : (isAr ? 'ملف التوثيق والصور (٥/٥) ▼' : 'Accreditation Media Hub ▼')}</span>
-                <span className="bg-emerald-900/60 px-1.5 py-0.5 rounded text-[10px] font-mono">{uploadedMediaCount}/5</span>
-              </button>
+                <span>🛡️</span>
+                <span>{isAr ? 'ملف التوثيق والوسائط' : 'Accreditation & Media Dossier'}</span>
+                <span className="text-[10px] opacity-75">↗</span>
+              </Link>
 
               <span className="text-xs font-mono text-gray-600 bg-gray-100 px-3 py-2 rounded-xl border border-gray-200">
                 REF: INST-{String(institution.id).padStart(4, '0')}
               </span>
             </div>
           </div>
-
-          {/* Media Hub Notification Alert */}
-          {mediaMsg && (
-            <div className={`mx-6 mb-4 p-3 rounded-xl text-xs font-medium flex items-center gap-2 ${
-              mediaMsg.type === 'success' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'
-            }`}>
-              <span>{mediaMsg.type === 'success' ? '✓' : '⚠️'}</span>
-              <span>{mediaMsg.text}</span>
-            </div>
-          )}
-
-          {/* ── Expandable Accreditation & Media Hub ── */}
-          <AnimatePresence>
-            {showMediaHub && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-gray-50/80 border-t border-gray-200 p-5 sm:p-6"
-              >
-                <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 ${isAr ? 'sm:flex-row-reverse text-right' : ''}`}>
-                  <div>
-                    <h4 className="font-serif font-bold text-sm text-gray-900">
-                      {isAr ? 'ملفات التوثيق والوسائط لاعتماد المؤسسة' : 'Accreditation Media & Verification Dossier'}
-                    </h4>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {isAr
-                        ? 'ارفع صور الشيخ المشرف، الفصول، الطلاب في الحلقة، وفيديو تعريفي لسرعة الاعتماد.'
-                        : 'Upload teacher photo, classroom premises, students in session, and intro video to accelerate committee verification.'}
-                    </p>
-                  </div>
-                  <span className="text-[11px] font-mono text-emerald-800 bg-emerald-100/70 border border-emerald-200 px-2.5 py-1 rounded-lg">
-                    AWS S3: institutions/{institution.name.replace(/\s+/g, '_')}/
-                  </span>
-                </div>
-
-                {/* 5-Slot Media Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                  
-                  {/* 1. Official Document */}
-                  <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-emerald-500/50 shadow-sm transition-all">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">📄</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${institution.document_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>
-                          {institution.document_url ? 'Uploaded ✓' : 'Pending'}
-                        </span>
-                      </div>
-                      <p className="font-bold text-xs text-gray-900">Official Certificate</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">Madrasa / SUPKEM Doc</p>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
-                      <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-emerald-50 hover:text-emerald-800">
-                        {uploadingType === 'document' ? 'Uploading…' : (institution.document_url ? 'Replace' : 'Upload')}
-                        <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" className="hidden" disabled={uploadingType !== null} onChange={(e) => handleMediaUpload('document', e)} />
-                      </label>
-                      {institution.document_url && (
-                        <a href={institution.document_url} target="_blank" rel="noopener noreferrer" className="p-1 text-emerald-700 hover:text-emerald-900 text-xs font-bold">↗</a>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 2. Head Ustadh Photo */}
-                  <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-sky-500/50 shadow-sm transition-all">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center font-bold text-xs">👨‍🏫</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${institution.teacher_photo_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>
-                          {institution.teacher_photo_url ? 'Uploaded ✓' : 'Pending'}
-                        </span>
-                      </div>
-                      <p className="font-bold text-xs text-gray-900">Head Ustadh Photo</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">Lead Teacher / Imam</p>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
-                      <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-sky-50 hover:text-sky-800">
-                        {uploadingType === 'teacher' ? 'Uploading…' : (institution.teacher_photo_url ? 'Replace' : 'Upload')}
-                        <input type="file" accept="image/jpeg,image/png,image/jpg" className="hidden" disabled={uploadingType !== null} onChange={(e) => handleMediaUpload('teacher', e)} />
-                      </label>
-                      {institution.teacher_photo_url && (
-                        <a href={institution.teacher_photo_url} target="_blank" rel="noopener noreferrer" className="p-1 text-sky-700 hover:text-sky-900 text-xs font-bold">↗</a>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 3. Classroom Premises Photo */}
-                  <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-amber-500/50 shadow-sm transition-all">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-xs">🏫</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${institution.classroom_photo_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>
-                          {institution.classroom_photo_url ? 'Uploaded ✓' : 'Pending'}
-                        </span>
-                      </div>
-                      <p className="font-bold text-xs text-gray-900">Classroom Premises</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">Halaqa / Building Photo</p>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
-                      <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-amber-50 hover:text-amber-800">
-                        {uploadingType === 'classroom' ? 'Uploading…' : (institution.classroom_photo_url ? 'Replace' : 'Upload')}
-                        <input type="file" accept="image/jpeg,image/png,image/jpg" className="hidden" disabled={uploadingType !== null} onChange={(e) => handleMediaUpload('classroom', e)} />
-                      </label>
-                      {institution.classroom_photo_url && (
-                        <a href={institution.classroom_photo_url} target="_blank" rel="noopener noreferrer" className="p-1 text-amber-700 hover:text-amber-900 text-xs font-bold">↗</a>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 4. Students in Session */}
-                  <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-emerald-500/50 shadow-sm transition-all">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">👥</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${institution.students_photo_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>
-                          {institution.students_photo_url ? 'Uploaded ✓' : 'Pending'}
-                        </span>
-                      </div>
-                      <p className="font-bold text-xs text-gray-900">Students in Session</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">Madrasa Assembly Photo</p>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
-                      <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-emerald-50 hover:text-emerald-800">
-                        {uploadingType === 'students' ? 'Uploading…' : (institution.students_photo_url ? 'Replace' : 'Upload')}
-                        <input type="file" accept="image/jpeg,image/png,image/jpg" className="hidden" disabled={uploadingType !== null} onChange={(e) => handleMediaUpload('students', e)} />
-                      </label>
-                      {institution.students_photo_url && (
-                        <a href={institution.students_photo_url} target="_blank" rel="noopener noreferrer" className="p-1 text-emerald-700 hover:text-emerald-900 text-xs font-bold">↗</a>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 5. Introduction Video */}
-                  <div className="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-rose-500/50 shadow-sm transition-all">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="w-7 h-7 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center font-bold text-xs">🎥</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${institution.video_url ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>
-                          {institution.video_url ? 'Uploaded ✓' : 'Pending'}
-                        </span>
-                      </div>
-                      <p className="font-bold text-xs text-gray-900">Introduction Video</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">Tour / Recitation (.mp4)</p>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-1.5">
-                      <label className="btn-secondary !py-1 !px-2 text-[10px] flex-1 text-center cursor-pointer hover:bg-rose-50 hover:text-rose-800">
-                        {uploadingType === 'video' ? 'Uploading…' : (institution.video_url ? 'Replace' : 'Upload')}
-                        <input type="file" accept="video/mp4,video/quicktime,video/webm,video/*" className="hidden" disabled={uploadingType !== null} onChange={(e) => handleMediaUpload('video', e)} />
-                      </label>
-                      {institution.video_url && (
-                        <a href={institution.video_url} target="_blank" rel="noopener noreferrer" className="p-1 text-rose-700 hover:text-rose-900 text-xs font-bold">▶</a>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       )}
 
