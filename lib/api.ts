@@ -91,6 +91,7 @@ export interface InstitutionRead {
   email: string
   county_id: number | null
   region_id: number | null
+  document_url: string | null
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   rejection_reason: string | null
   preferred_language: 'EN' | 'AR'
@@ -102,6 +103,26 @@ export async function registerInstitution(data: InstitutionCreate): Promise<Inst
     method: 'POST',
     body: JSON.stringify(data),
   })
+}
+
+export async function uploadInstitutionDocument(
+  institutionId: number,
+  file: File
+): Promise<{ s3_key: string; url: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const res = await fetch(`${API_URL}/api/v1/institutions/${institutionId}/document`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiError(res.status, err.detail || 'Document upload failed')
+  }
+
+  return res.json()
 }
 
 export async function getMyInstitution(token: string): Promise<InstitutionRead> {

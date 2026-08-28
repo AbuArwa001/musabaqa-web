@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
-import { registerInstitution, ApiError, type County, type Region } from '@/lib/api'
+import { registerInstitution, uploadInstitutionDocument, ApiError, type County, type Region } from '@/lib/api'
 import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
@@ -44,6 +44,9 @@ export default function RegisterForm({
   const [success, setSuccess] = useState(false)
   const [serverError, setServerError] = useState('')
   const [step, setStep] = useState(1)
+  const [docFile, setDocFile] = useState<File | null>(null)
+  const [docError, setDocError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const hasCounties = counties.length > 0
 
@@ -80,10 +83,34 @@ export default function RegisterForm({
     setValue('region_id', '', { shouldValidate: false })
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDocError('')
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']
+      if (!validTypes.includes(file.type)) {
+        setDocError(isAr ? 'يرجى رفع ملف بصيغة PDF أو JPG أو PNG فقط' : 'Please upload a PDF, JPG, or PNG document.')
+        return
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setDocError(isAr ? 'الحد الأقصى لحجم الملف هو 10 ميغابايت' : 'File size exceeds 10MB limit.')
+        return
+      }
+      setDocFile(file)
+    }
+  }
+
+  const removeFile = () => {
+    setDocFile(null)
+    setDocError('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   async function onSubmit(data: FormData) {
     setServerError('')
     try {
-      await registerInstitution({
+      // 1. Create the institution record
+      const inst = await registerInstitution({
         name: data.name,
         type: data.type,
         contact_person: data.contact_person,
@@ -94,6 +121,16 @@ export default function RegisterForm({
         region_id: data.region_id ? parseInt(data.region_id) : undefined,
         preferred_language: data.preferred_language,
       })
+
+      // 2. Upload verification document to AWS S3 (under institutions/<institution_name>/<file>)
+      if (docFile && inst?.id) {
+        try {
+          await uploadInstitutionDocument(inst.id, docFile)
+        } catch (uploadErr) {
+          console.error('Document upload failed after registration:', uploadErr)
+        }
+      }
+
       setSuccess(true)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -158,11 +195,11 @@ export default function RegisterForm({
 
       <form onSubmit={handleSubmit(onSubmit)} className="relative z-10" noValidate>
         
-        {/* Step 1: Institution Details */}
+        {/* Step 1: Institution Details & Location */}
         <div className={`space-y-6 transition-all duration-500 ${step === 1 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 h-0 overflow-hidden'}`}>
           <div className="text-center mb-8">
-            <h3 className="font-serif text-xl font-bold text-white">{t.institution_name} & Details</h3>
-            <p className="text-stone-400 text-sm mt-1">Let's start with your institution's core details and location.</p>
+            <h3 className="font-serif text-xl font-bold text-white">{t.institution_name} & Location</h3>
+            <p className="text-stone-400 text-sm mt-1">Let's start with your institution's core details and regional location.</p>
           </div>
 
           <div>
@@ -268,12 +305,13 @@ export default function RegisterForm({
           </div>
         </div>
 
-        {/* Step 3: Security */}
+        {/* Step 3: Security & Verification Documents */}
         <div className={`space-y-6 transition-all duration-500 ${step === 3 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 h-0 overflow-hidden'}`}>
           <div className="text-center mb-8">
-            <h3 className="font-serif text-xl font-bold text-white">Security & Preferences</h3>
-            <p className="text-stone-400 text-sm mt-1">Set up your password and finish registration.</p>
+            <h3 className="font-serif text-xl font-bold text-white">Security & Verification</h3>
+            <p className="text-stone-400 text-sm mt-1">Set your login credentials and attach verification documents.</p>
           </div>
+
           <div>
             <label className="label">{t.password}</label>
             <input {...register('password')} type="password" className={inputClass} dir="ltr" />
@@ -296,6 +334,73 @@ export default function RegisterForm({
             </select>
           </div>
 
+          {/* ── Official Accreditation Document Upload (User Requirement) ── */}
+          <div className="pt-3 border-t border-white/10">
+            <div className={`mb-2 ${isAr ? 'text-right' : ''}`}>
+              <label className="label font-serif text-white flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-[#c99335]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {t.verification_document || 'Official Registration / Accreditation Document'}
+              </label>
+              <p className="text-xs text-stone-400 leading-relaxed">
+                {t.verification_document_hint || 'Upload Madrasa registration certificate, SUPKEM/CIPK accreditation, or Head Ustadh endorsement letter (.pdf, .jpg, .png, max 10MB)'}
+              </p>
+            </div>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              className="hidden"
+              id="institution_doc_input"
+            />
+
+            {!docFile ? (
+              <label
+                htmlFor="institution_doc_input"
+                className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-white/20 hover:border-[#c99335]/60 bg-black/30 hover:bg-black/50 rounded-xl cursor-pointer transition-all duration-300 group"
+              >
+                <div className="w-10 h-10 rounded-full bg-white/5 group-hover:bg-[#c99335]/20 text-stone-400 group-hover:text-[#c99335] flex items-center justify-center mb-2 transition-colors">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                </div>
+                <span className="text-xs font-semibold text-stone-300 group-hover:text-white">
+                  {t.choose_document || 'Click to select document (.pdf, .jpg, .png)'}
+                </span>
+                <span className="text-[10px] text-stone-500 mt-1">Saved securely in AWS for Administration Approval</span>
+              </label>
+            ) : (
+              <div className="flex items-center justify-between p-3.5 bg-emerald-950/30 border border-emerald-500/40 rounded-xl">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{docFile.name}</p>
+                    <p className="text-[10px] text-emerald-400/80">{(docFile.size / 1024 / 1024).toFixed(2)} MB · {t.document_selected || 'Ready for upload'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={removeFile}
+                  className="text-stone-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                  title="Remove file"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {docError && <p className="error-text">{docError}</p>}
+          </div>
+
           {serverError && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-600 text-sm text-center font-medium">
               {serverError}
@@ -305,7 +410,15 @@ export default function RegisterForm({
           <div className="flex gap-4 mt-4">
             <button type="button" onClick={() => setStep(2)} className="btn-secondary flex-1">Back</button>
             <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">
-              {isSubmitting ? t.submitting : t.submit}
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  {t.submitting}
+                </span>
+              ) : t.submit}
             </button>
           </div>
         </div>
