@@ -5,6 +5,9 @@ import Image from 'next/image'
 import { isValidLocale, getDictionary } from '@/lib/dictionaries'
 import LoginForm from '@/components/LoginForm'
 
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+
 export async function generateMetadata(props: PageProps<'/[lang]/login'>): Promise<Metadata> {
   const { lang } = await props.params
   return {
@@ -18,6 +21,13 @@ export async function generateMetadata(props: PageProps<'/[lang]/login'>): Promi
 export default async function LoginPage(props: PageProps<'/[lang]/login'>) {
   const { lang } = await props.params
   if (!isValidLocale(lang)) notFound()
+
+  // If already logged in, automatically proceed to the portal
+  const store = await cookies()
+  if (store.get('musabaqa_token')?.value) {
+    redirect(`/${lang}/portal/students`)
+  }
+
   const dict = await getDictionary(lang)
   const isAr = lang === 'ar'
 
