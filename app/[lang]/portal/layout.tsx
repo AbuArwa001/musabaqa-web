@@ -76,15 +76,19 @@ export default async function PortalLayout({
           {/* Brand Header */}
           <div className="p-6 border-b border-[#2d2520] bg-[#120e0c]">
             <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
-              <div className="relative flex-shrink-0">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#c99335] to-amber-400 rounded-lg blur opacity-30" />
-                <div className="relative w-9 h-9 rounded-lg bg-[#c99335] flex items-center justify-center font-serif font-bold text-white shadow-md text-lg">
-                  M
-                </div>
+              <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#c99335]/60 flex items-center justify-center bg-black/50 shadow-md p-1 shrink-0">
+                <Image
+                  src="/images/jamia_logo.png"
+                  alt="Jamia Mosque Logo"
+                  width={36}
+                  height={36}
+                  priority
+                  className="object-contain"
+                />
               </div>
               <div className={isAr ? 'text-right' : ''}>
                 <h1 className="font-serif text-base font-bold tracking-tight text-white leading-tight">
-                  Musabaqa
+                  Jamia Musabaqa
                 </h1>
                 <p className="text-[10px] text-[#c99335] font-medium tracking-wider uppercase">
                   {isAr ? 'بوابة المؤسسة' : 'Institution Portal'}
