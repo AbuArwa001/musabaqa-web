@@ -56,14 +56,19 @@ export default function HomeHero({ lang, dict }: HomeHeroProps) {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, ease: 'easeOut' }}
-          className="mb-8 relative w-24 h-24 flex items-center justify-center"
+          className="mb-8 relative w-28 h-28 flex items-center justify-center"
         >
-          <div className="absolute -inset-4 rounded-full bg-[#c99335]/15 blur-xl" />
-          <div className="absolute -inset-2 rounded-full bg-gradient-to-b from-[#c99335]/30 to-emerald-600/20 blur-md" />
-          <div className="relative w-24 h-24 bg-gradient-to-br from-[#1e1713]/90 to-[#0c0908]/90 border border-[#c99335]/50 rounded-full flex items-center justify-center shadow-[0_0_60px_rgba(201,147,53,0.25)] backdrop-blur-md">
-            <span className="font-serif text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-[#f8d697] via-[#c99335] to-[#fcf9f2]">
-              م
-            </span>
+          <div className="absolute -inset-4 rounded-full bg-[#c99335]/25 blur-xl animate-pulse" />
+          <div className="absolute -inset-2 rounded-full bg-gradient-to-b from-[#c99335]/40 to-emerald-600/30 blur-md" />
+          <div className="relative w-28 h-28 bg-gradient-to-br from-[#1e1713]/95 to-[#0c0908]/95 border-2 border-[#c99335]/60 rounded-full flex items-center justify-center shadow-[0_0_60px_rgba(201,147,53,0.35)] backdrop-blur-md p-3">
+            <Image
+              src="/images/jamia_logo.png"
+              alt="Jamia Mosque Nairobi Official Logo"
+              width={88}
+              height={88}
+              priority
+              className="object-contain filter drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
+            />
           </div>
         </motion.div>
 

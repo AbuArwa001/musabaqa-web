@@ -48,18 +48,23 @@ export default async function LoginPage(props: PageProps<'/[lang]/login'>) {
         <div className={`lg:col-span-5 space-y-6 text-center lg:text-left ${isAr ? 'lg:text-right' : ''}`}>
           
           {/* Emblem & Branding */}
-          <div className="inline-flex items-center gap-3">
-            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1e1713] to-[#0c0908] border border-[#c99335]/50 flex items-center justify-center shadow-xl shadow-black/60">
-              <span className="font-serif text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-[#f8d697] via-[#c99335] to-[#fcf9f2]">
-                م
-              </span>
+          <div className="inline-flex items-center gap-3.5">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-[#1e1713] to-[#0c0908] border-2 border-[#c99335]/60 flex items-center justify-center shadow-xl shadow-black/60 p-2">
+              <Image
+                src="/images/jamia_logo.png"
+                alt="Jamia Mosque Logo"
+                width={56}
+                height={56}
+                priority
+                className="object-contain"
+              />
             </div>
             <div>
               <p className="font-serif text-xl font-bold text-white leading-tight">
-                {isAr ? 'مسابقة مسجد جامع' : 'Jamia Musabaqa'}
+                {isAr ? 'مسجد جامع نيروبي' : 'Jamia Mosque Nairobi'}
               </p>
               <p className="text-[11px] text-[#c99335] uppercase tracking-widest font-semibold font-mono">
-                {isAr ? 'بوابة إدارة المؤسسات والمدارس' : 'Institutional Examination Portal'}
+                {isAr ? 'بوابة إدارة المؤسسات والمدارس' : 'Musabaqa Institutional Portal'}
               </p>
             </div>
           </div>

@@ -101,14 +101,33 @@ export default function Navbar({ lang, dict }: NavbarProps) {
             initial="hidden"
             animate="visible"
             variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-            className={`hidden md:flex items-center justify-center gap-y-4 relative ${isRTL ? 'flex-row-reverse' : ''}`}
+            className={`hidden md:flex items-center justify-between relative ${isRTL ? 'flex-row-reverse' : ''}`}
           >
+            {/* Jamia Brand Logo */}
+            <Link href={`/${lang}`} className="flex items-center gap-3 group">
+              <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#c99335]/40 shadow-md group-hover:border-[#c99335] transition-all">
+                <img
+                  src="/images/jamia_logo.png"
+                  alt="Jamia Mosque Logo"
+                  className="w-full h-full object-contain p-0.5"
+                />
+              </div>
+              <div className={isRTL ? 'text-right' : 'text-left'}>
+                <span className="font-serif text-sm font-bold text-white tracking-wider block leading-tight">
+                  {isRTL ? 'مسجد جامع نيروبي' : 'JAMIA MOSQUE'}
+                </span>
+                <span className="text-[10px] text-[#c99335] uppercase tracking-widest font-mono block">
+                  Musabaqa 2026
+                </span>
+              </div>
+            </Link>
+
             <div className={`flex items-center justify-center flex-wrap gap-y-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               {renderLinkGroup(navLinks)}
             </div>
 
             {/* Register CTA — pinned right */}
-            <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} flex items-center gap-3`}>
+            <div className="flex items-center gap-3">
               {/* Language switcher */}
               <Link
                 href={altHref}
@@ -131,12 +150,14 @@ export default function Navbar({ lang, dict }: NavbarProps) {
           <div className="md:hidden flex items-center justify-between h-8">
             {/* Mobile logo */}
             <Link href={`/${lang}`} className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#1a1512] border border-[#c99335]/40 flex items-center justify-center shadow-lg">
-                <span className="font-serif text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#e39e3b] via-[#c99335] to-[#fcf9f2]">
-                  M
-                </span>
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-[#c99335]/40 flex items-center justify-center shadow-lg bg-black/40">
+                <img
+                  src="/images/jamia_logo.png"
+                  alt="Jamia Mosque Logo"
+                  className="w-full h-full object-contain p-0.5"
+                />
               </div>
-              <span className="font-serif text-sm font-bold text-white tracking-wide">Musabaqa</span>
+              <span className="font-serif text-sm font-bold text-white tracking-wide">Jamia Musabaqa</span>
             </Link>
 
             <button

@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
+import Image from 'next/image'
 import { isValidLocale, getDictionary } from '@/lib/dictionaries'
 import { getMyInstitution } from '@/lib/api'
 import { Cinzel, Outfit } from 'next/font/google'
