@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getDictionary, isValidLocale } from '@/lib/dictionaries'
 import Countdown from '@/components/Countdown'
 import HomeHero from '@/components/HomeHero'
+import ScoringRubric from '@/components/ScoringRubric'
 
 export async function generateMetadata(props: PageProps<'/[lang]'>): Promise<Metadata> {
   const { lang } = await props.params
