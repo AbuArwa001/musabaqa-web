@@ -12,6 +12,7 @@ type Dict = typeof en
 interface NavbarProps {
   lang: string
   dict: Dict
+  isLoggedIn?: boolean
 }
 
 const linkVariants = {
@@ -19,7 +20,7 @@ const linkVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
 }
 
-export default function Navbar({ lang, dict }: NavbarProps) {
+export default function Navbar({ lang, dict, isLoggedIn = false }: NavbarProps) {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -42,7 +43,9 @@ export default function Navbar({ lang, dict }: NavbarProps) {
   const navLinks = [
     { name: dict.nav.home, href: `/${lang}` },
     { name: dict.nav.leaderboard, href: `/${lang}/leaderboard` },
-    { name: dict.nav.login, href: `/${lang}/login` },
+    ...(isLoggedIn
+      ? [{ name: isRTL ? 'بوابة المؤسسة' : 'Institution Portal', href: `/${lang}/portal/students` }]
+      : [{ name: dict.nav.login, href: `/${lang}/login` }]),
   ]
 
   const renderLinkGroup = (links: { name: string; href: string }[]) =>
@@ -131,7 +134,7 @@ export default function Navbar({ lang, dict }: NavbarProps) {
               {renderLinkGroup(navLinks)}
             </div>
 
-            {/* Register CTA — pinned right */}
+            {/* Right Action Buttons */}
             <div className="flex items-center gap-3">
               {/* Language switcher */}
               <Link
@@ -142,12 +145,35 @@ export default function Navbar({ lang, dict }: NavbarProps) {
                 {otherLang === 'ar' ? 'العربية' : 'EN'}
               </Link>
 
-              <Link
-                href={`/${lang}/register`}
-                className="bg-gradient-to-r from-[#cca04b] to-[#b88c3a] text-white px-7 py-2 rounded-full font-serif text-[12px] tracking-[0.15em] uppercase shadow-sm hover:shadow-[0_0_20px_rgba(204,160,75,0.5)] hover:scale-105 transition-all duration-300 border border-[#e3ca8c]/30"
-              >
-                {dict.nav.register}
-              </Link>
+              {isLoggedIn ? (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/${lang}/portal/students`}
+                    className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 text-white px-5 py-2 rounded-full font-serif text-[12px] tracking-[0.12em] uppercase shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] hover:scale-105 transition-all duration-300 border border-emerald-500/40 flex items-center gap-1.5 font-bold"
+                  >
+                    <span>🏛️</span>
+                    <span>{isRTL ? 'لوحة المؤسسة' : 'Return to Portal'}</span>
+                    <span className="text-[10px]">{isRTL ? '←' : '→'}</span>
+                  </Link>
+
+                  <form action="/api/logout" method="POST" className="inline">
+                    <button
+                      type="submit"
+                      className="text-stone-400 hover:text-rose-400 text-xs px-2.5 py-1 rounded-md transition-colors cursor-pointer"
+                      title={dict.nav.logout}
+                    >
+                      {dict.nav.logout}
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <Link
+                  href={`/${lang}/register`}
+                  className="bg-gradient-to-r from-[#cca04b] to-[#b88c3a] text-white px-7 py-2 rounded-full font-serif text-[12px] tracking-[0.15em] uppercase shadow-sm hover:shadow-[0_0_20px_rgba(204,160,75,0.5)] hover:scale-105 transition-all duration-300 border border-[#e3ca8c]/30"
+                >
+                  {dict.nav.register}
+                </Link>
+              )}
             </div>
           </motion.div>
 

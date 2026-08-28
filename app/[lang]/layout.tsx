@@ -41,6 +41,8 @@ export async function generateMetadata(props: PageProps<'/[lang]'>): Promise<Met
   }
 }
 
+import { cookies } from 'next/headers'
+
 export default async function LocaleLayout({
   children,
   params,
@@ -51,6 +53,10 @@ export default async function LocaleLayout({
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr'
   const dict = await getDictionary(lang)
+
+  // Check if institution session exists
+  const store = await cookies()
+  const isLoggedIn = !!store.get('musabaqa_token')?.value
 
   return (
     <html
@@ -64,7 +70,7 @@ export default async function LocaleLayout({
         <div className="fixed bottom-[-10%] -right-20 w-[500px] h-[500px] bg-[#c99335]/10 rounded-full blur-[120px] pointer-events-none -z-10" />
         <div className="fixed inset-0 bg-[radial-gradient(#c99335_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.02] pointer-events-none -z-10" />
 
-        <Navbar lang={lang} dict={dict} />
+        <Navbar lang={lang} dict={dict} isLoggedIn={isLoggedIn} />
         <main className="relative z-0">{children}</main>
         <Footer lang={lang} />
       </body>
