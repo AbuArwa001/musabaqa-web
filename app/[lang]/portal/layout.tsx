@@ -67,8 +67,7 @@ export default async function PortalLayout({
   const status = institution.status
 
   return (
-    <html lang={lang} dir={isAr ? 'rtl' : 'ltr'} className={`${cinzel.variable} ${outfit.variable}`}>
-      <body className={`flex h-screen bg-gray-50 overflow-hidden font-sans ${isAr ? 'flex-row-reverse' : ''}`}>
+    <div className={`flex h-screen bg-gray-50 overflow-hidden font-sans ${cinzel.variable} ${outfit.variable} ${isAr ? 'flex-row-reverse' : ''}`} dir={isAr ? 'rtl' : 'ltr'}>
 
         {/* ── Sidebar ── */}
         <aside className={`w-64 bg-[#1a1512] text-white flex flex-col h-full flex-shrink-0 shadow-xl ${isAr ? 'border-l border-[#2d2520]' : 'border-r border-[#2d2520]'}`}>
@@ -202,7 +201,6 @@ export default async function PortalLayout({
             {children}
           </div>
         </main>
-      </body>
-    </html>
+    </div>
   )
 }

@@ -4,6 +4,7 @@ import { isValidLocale, getDictionary } from '@/lib/dictionaries'
 import { Cinzel, Outfit } from 'next/font/google'
 import '@/app/globals.css'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 const cinzel = Cinzel({
   variable: '--font-cinzel',

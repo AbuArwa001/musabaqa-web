@@ -25,6 +25,11 @@ export default function Navbar({ lang, dict }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const isRTL = lang === 'ar'
 
+  // Do not render public navbar on portal dashboard routes
+  if (pathname?.includes('/portal')) {
+    return null
+  }
+
   const otherLang = lang === 'en' ? 'ar' : 'en'
   const altHref = pathname.replace(/^\/(en|ar)/, `/${otherLang}`)
 
