@@ -133,6 +133,18 @@ export default async function PortalLayout({
                 </li>
               ))}
             </ul>
+
+            {/* Quick Switch to Public Website */}
+            <div className="pt-4 mt-3 border-t border-white/10">
+              <Link
+                href={`/${lang}`}
+                className={`flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#f6cb7d] bg-[#c99335]/15 hover:bg-[#c99335]/30 border border-[#c99335]/40 rounded-lg transition-all ${isAr ? 'flex-row-reverse' : ''}`}
+              >
+                <span>🌐</span>
+                <span className="flex-1">{isAr ? 'الموقع العام للمسابقة' : 'View Public Website'}</span>
+                <span className="text-[10px] opacity-75">↗</span>
+              </Link>
+            </div>
           </nav>
 
           {/* Footer Logout */}
@@ -163,27 +175,40 @@ export default async function PortalLayout({
               </h2>
             </div>
 
-            {/* Status banners inline in header */}
-            {status === 'PENDING' && (
-              <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                <p className="text-amber-700 font-semibold text-xs uppercase tracking-wide">{dict.portal.status_pending}</p>
-              </div>
-            )}
-            {status === 'REJECTED' && (
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                <p className="text-red-700 font-semibold text-xs uppercase tracking-wide">{dict.portal.status_rejected}</p>
-              </div>
-            )}
+            {/* Header Right Actions */}
+            <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+              {/* Status banners inline in header */}
+              {status === 'PENDING' && (
+                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <p className="text-amber-700 font-semibold text-xs uppercase tracking-wide">{dict.portal.status_pending}</p>
+                </div>
+              )}
+              {status === 'REJECTED' && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  <p className="text-red-700 font-semibold text-xs uppercase tracking-wide">{dict.portal.status_rejected}</p>
+                </div>
+              )}
 
-            {/* Language switcher */}
-            <Link
-              href={`/${lang === 'en' ? 'ar' : 'en'}/portal/students`}
-              className="text-xs font-semibold text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-[#006838] hover:text-[#006838] transition-colors"
-            >
-              {lang === 'en' ? 'العربية' : 'EN'}
-            </Link>
+              {/* Public Website Button */}
+              <Link
+                href={`/${lang}`}
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#c99335]/40 bg-[#c99335]/10 text-stone-800 hover:bg-[#c99335] hover:text-white transition-all shadow-sm ${isAr ? 'flex-row-reverse' : ''}`}
+              >
+                <span>🌐</span>
+                <span>{isAr ? 'الموقع العام' : 'Public Site'}</span>
+                <span className="text-[10px]">↗</span>
+              </Link>
+
+              {/* Language switcher */}
+              <Link
+                href={`/${lang === 'en' ? 'ar' : 'en'}/portal/students`}
+                className="text-xs font-semibold text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-[#006838] hover:text-[#006838] transition-colors"
+              >
+                {lang === 'en' ? 'العربية' : 'EN'}
+              </Link>
+            </div>
           </header>
 
           {/* Page Content */}

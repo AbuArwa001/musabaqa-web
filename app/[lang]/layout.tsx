@@ -66,9 +66,7 @@ export default async function LocaleLayout({
 
         <Navbar lang={lang} dict={dict} />
         <main className="relative z-0">{children}</main>
-        <footer className="relative z-10 border-t border-white/5 mt-24 py-10 text-center text-stone-500 text-sm">
-          <p>© 2025 Jamia Mosque Nairobi — Musabaqa</p>
-        </footer>
+        <Footer lang={lang} />
       </body>
     </html>
   )
