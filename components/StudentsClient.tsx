@@ -123,6 +123,14 @@ export default function StudentsClient({
   const [serverError, setServerError] = useState('')
   const [formUploadStatus, setFormUploadStatus] = useState<string | null>(null)
   const [docErrors, setDocErrors] = useState<{ photo?: string; idDoc?: string }>({})
+  const [statusModal, setStatusModal] = useState<{
+    type: 'loading' | 'error' | 'success'
+    title: string
+    message: string
+    subMessage?: string
+    progressStep?: string
+    student?: Student
+  } | null>(null)
 
   // Document verification file states for the active form
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -168,6 +176,7 @@ export default function StudentsClient({
     setShowForm(true)
     setServerError('')
     setFormUploadStatus(null)
+    setStatusModal(null)
     setTimeout(() => document.getElementById('student-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
@@ -195,6 +204,7 @@ export default function StudentsClient({
     setShowForm(true)
     setServerError('')
     setFormUploadStatus(null)
+    setStatusModal(null)
     setTimeout(() => document.getElementById('student-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
@@ -214,6 +224,17 @@ export default function StudentsClient({
       setIdDocPreview(file.name)
       setDocErrors((prev) => ({ ...prev, idDoc: undefined }))
     }
+  }
+
+  const onInvalid = (formErrors: any) => {
+    const errorKeys = Object.keys(formErrors)
+    const firstError = formErrors[errorKeys[0]]?.message || (isAr ? 'يرجى استكمال جميع الحقول الإلزامية المطلوبة' : 'Please fill in all mandatory fields marked with *.')
+    setStatusModal({
+      type: 'error',
+      title: isAr ? 'بيانات غير مكتملة في الاستمارة' : 'Form Validation Incomplete',
+      message: String(firstError),
+      subMessage: isAr ? 'يرجى مراجعة الحقول المطلوبة الموضحة باللون الأحمر قبل المتابعة.' : 'Please review and complete all highlighted mandatory fields to proceed.',
+    })
   }
 
   async function onSubmit(data: StudentFormData) {
@@ -237,16 +258,31 @@ export default function StudentsClient({
           : 'Identification document (Birth Cert / ID / Passport) is required for verification *'
       }
       setDocErrors(vErrors)
-      setServerError(
-        isAr
-          ? 'يرجى رفع الصورة الشخصية للمتسابق ووثيقة إثبات الهوية (المستندات إلزامية للقبول)'
-          : 'Both the candidate passport photo and identification document are mandatory for registration.'
-      )
+      setStatusModal({
+        type: 'error',
+        title: isAr ? 'المستندات المطلوبة غير مكتملة' : 'Mandatory Documents Required',
+        message: isAr
+          ? 'يرجى رفع الصورة الشخصية للمتسابق ووثيقة إثبات الهوية (شهادة ميلاد / هوية / جواز) للمتابعة.'
+          : 'Both the candidate passport photo and identification document are mandatory for registration.',
+        subMessage: isAr
+          ? 'تُحفظ المستندات في سحابة AWS S3 لتدقيق اللجنة وإصدار بطاقات الامتحان الرسمية.'
+          : 'Documents are securely synchronized with AWS S3 for committee accreditation and hall ticket issuance.',
+      })
       document.getElementById('verification-files-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
 
-    setFormUploadStatus(isAr ? 'جاري حفظ بيانات المرشح...' : 'Saving candidate profile…')
+    // Trigger Luxury Loading Modal
+    setStatusModal({
+      type: 'loading',
+      title: editingId
+        ? (isAr ? 'جاري تحديث بيانات المرشح...' : 'Updating Candidate Profile…')
+        : (isAr ? 'جاري تسجيل المرشح في المسابقة...' : 'Enrolling Candidate in Musabaqa…'),
+      message: isAr
+        ? 'يتم التحقق من البيانات ومزامنة الملفات مع سحابة AWS...'
+        : 'Validating registration rules and transferring verification files to AWS S3…',
+      progressStep: isAr ? 'الخطوة ١ من ٣: حفظ سجل المتسابق...' : 'Step 1 of 3: Registering candidate demographic profile…',
+    })
 
     try {
       const payload = {
@@ -274,7 +310,10 @@ export default function StudentsClient({
 
       // Upload passport photo to AWS S3 if provided
       if (photoFile) {
-        setFormUploadStatus(isAr ? 'جاري رفع الصورة الشخصية إلى السحابة...' : 'Uploading candidate passport photo to AWS S3…')
+        setStatusModal((prev) => prev ? {
+          ...prev,
+          progressStep: isAr ? 'الخطوة ٢ من ٣: رفع الصورة الشخصية إلى AWS S3...' : 'Step 2 of 3: Transferring passport photo to AWS S3…',
+        } : null)
         try {
           const photoRes = await uploadStudentPhoto(token, savedStudent.id, photoFile)
           savedStudent.photo = photoRes.url
@@ -285,7 +324,10 @@ export default function StudentsClient({
 
       // Upload ID document (birth cert/ID/passport) to AWS S3 if provided
       if (idDocFile) {
-        setFormUploadStatus(isAr ? 'جاري رفع وثيقة إثبات الهوية إلى السحابة...' : 'Uploading identification document to AWS S3…')
+        setStatusModal((prev) => prev ? {
+          ...prev,
+          progressStep: isAr ? 'الخطوة ٣ من ٣: رفع وتشفير وثيقة الهوية في AWS S3...' : 'Step 3 of 3: Encrypting identification document in AWS S3…',
+        } : null)
         try {
           const docRes = await uploadStudentIdDocument(token, savedStudent.id, idDocFile)
           savedStudent.id_document = docRes.url
@@ -303,15 +345,37 @@ export default function StudentsClient({
 
       setShowForm(false)
       reset()
+
+      // Trigger Luxury Success Modal
+      setStatusModal({
+        type: 'success',
+        title: editingId
+          ? (isAr ? 'تم تحديث بيانات المتسابق بنجاح!' : 'Candidate Dossier Updated!')
+          : (isAr ? 'تم تسجيل المرشح بنجاح في المسابقة!' : 'Candidate Enrolled Successfully!'),
+        message: isAr
+          ? `تم اعتماد ملف الطالب "${savedStudent.full_name}" وحفظ جميع الوثائق بنجاح.`
+          : `Candidate profile for ${savedStudent.full_name} has been secured and verification media synced with AWS S3.`,
+        subMessage: isAr
+          ? 'يمكنك الآن تنزيل بطاقة الامتحان الرسمية (PDF) أو إغلاق هذه النافذة.'
+          : 'You can now download the official Examination Hall Ticket or view your updated candidate roster.',
+        student: savedStudent,
+      })
     } catch (err: any) {
+      let errMsg = dict.common.error
       if (err instanceof ApiError) {
-        if (err.status === 409) setServerError(err.message)
-        else setServerError(dict.common.error)
+        errMsg = err.message || (err.status === 409 ? (isAr ? 'رقم الهوية أو هاتف ولي الأمر مسجل مسبقاً' : 'Duplicate candidate record or national ID already registered') : dict.common.error)
       } else {
-        setServerError(err.message || dict.common.error)
+        errMsg = err.message || dict.common.error
       }
-    } finally {
-      setFormUploadStatus(null)
+      setServerError(errMsg)
+      setStatusModal({
+        type: 'error',
+        title: isAr ? 'تعذر إتمام التسجيل' : 'Registration Could Not Be Completed',
+        message: errMsg,
+        subMessage: isAr
+          ? 'يرجى مراجعة البيانات والتأكد من صحة رقم الهوية ورقم الهاتف ومطابقة الفئة العمرية.'
+          : 'Please check your inputs, category age limits, and ensure national ID and phone are not registered already.',
+      })
     }
   }
 
@@ -679,106 +743,135 @@ export default function StudentsClient({
             </div>
 
             <div className="p-6 sm:p-8">
-              {serverError && (
-                <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-2xl flex items-center gap-2">
-                  <span className="text-base">⚠️</span>
-                  <span>{serverError}</span>
-                </div>
-              )}
-
-              {formUploadStatus && (
-                <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-2xl flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin shrink-0" />
-                  <span className="font-semibold">{formUploadStatus}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" noValidate>
+              <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-8" noValidate>
                 
                 {/* ── Section A: Candidate Verification Files (Passport Photo & Identification Document) ── */}
-                <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-5 sm:p-6">
-                  <h4 className="font-serif font-bold text-sm text-gray-900 mb-1 flex items-center gap-2">
-                    <span>🛡️</span>
-                    <span>{isAr ? 'وثائق التحقق وهوية المتسابق (الحفظ في AWS)' : 'Candidate Verification Files (AWS S3 Storage)'}</span>
-                  </h4>
-                  <p className="text-xs text-gray-500 mb-5">
-                    {isAr
-                      ? 'يتم تخزين الصورة الشخصية وهوية المرشح بأمان في AWS S3 لتسهيل مطابقتها وتوليد بطاقة الامتحان.'
-                      : 'Candidate passport photo and ID document are securely stored in AWS S3 and attached to the candidate dossier.'}
-                  </p>
+                <div id="verification-files-section" className="bg-emerald-950/5 border border-emerald-900/20 rounded-3xl p-6 sm:p-7 space-y-4">
+                  <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${isAr ? 'sm:flex-row-reverse text-right' : ''}`}>
+                    <div>
+                      <h4 className="font-serif font-bold text-base text-gray-900 flex items-center gap-2">
+                        <span className="text-xl">🛡️</span>
+                        <span>{isAr ? 'وثائق التحقق وهوية المتسابق (إلزامية في AWS S3)' : 'Candidate Verification Files (Mandatory AWS S3 Storage)'}</span>
+                      </h4>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {isAr
+                          ? 'يجب رفع الصورة الشخصية ووثيقة إثبات الهوية لاعتماد المتسابق وإصدار بطاقة الدخول للامتحان.'
+                          : 'Both the passport photo and identification document are strictly required for candidate validation and examination pass generation.'}
+                      </p>
+                    </div>
+                    <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-300 tracking-wide uppercase self-start sm:self-auto shrink-0">
+                      * {isAr ? 'المستندات إلزامية' : 'Documents Mandatory'}
+                    </span>
+                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                     
-                    {/* 1. Passport Photo */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between hover:border-emerald-400 transition-all">
+                    {/* 1. Passport Photo (Mandatory) */}
+                    <div className={`rounded-2xl p-5 border-2 transition-all flex flex-col justify-between shadow-sm ${
+                      docErrors.photo
+                        ? 'bg-rose-50/70 border-rose-400 ring-2 ring-rose-200'
+                        : photoPreview
+                        ? 'bg-emerald-50/40 border-emerald-400'
+                        : 'bg-white border-dashed border-gray-300 hover:border-emerald-500 hover:bg-emerald-50/10'
+                    }`}>
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                        <div className={`flex items-center justify-between mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+                          <span className="font-serif font-bold text-sm text-gray-900 flex items-center gap-2">
                             <span>📸</span>
                             <span>{isAr ? 'الصورة الشخصية للمتسابق' : 'Candidate Passport Photo'}</span>
+                            <span className="text-rose-600 font-bold text-sm">*</span>
                           </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            photoPreview ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                            photoPreview ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300 animate-pulse'
                           }`}>
-                            {photoPreview ? 'Selected ✓' : 'Optional'}
+                            {photoPreview ? 'Selected ✓' : (isAr ? 'مطلوب *' : 'Required *')}
                           </span>
                         </div>
-                        <p className="text-[11px] text-gray-500 mb-3">Formal portrait (.jpg, .png, max 5MB)</p>
+                        <p className="text-xs text-gray-500 mb-4">
+                          {isAr ? 'صورة شمسية واضحة للوجه بخلفية محايدة (.jpg, .png)' : 'Clear formal face portrait with plain background (.jpg, .png, max 5MB)'}
+                        </p>
 
-                        {/* Preview Box */}
-                        <div className="relative w-24 h-24 rounded-xl border border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center mx-auto mb-3">
+                        {/* Preview Frame */}
+                        <div className="relative w-28 h-28 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 overflow-hidden flex items-center justify-center mx-auto mb-4 shadow-inner">
                           {photoPreview ? (
-                            <Image src={photoPreview} alt="Candidate Photo" fill className="object-cover" />
+                            <Image src={photoPreview} alt="Candidate Face Photo" fill className="object-cover" />
                           ) : (
-                            <span className="text-2xl text-gray-300">👤</span>
+                            <div className="text-center p-2">
+                              <span className="text-3xl block mb-1 opacity-40">👤</span>
+                              <span className="text-[10px] font-semibold text-gray-400 block">{isAr ? 'لم تختر صورة' : 'No photo chosen'}</span>
+                            </div>
                           )}
                         </div>
+
+                        {docErrors.photo && (
+                          <p className="text-xs font-semibold text-rose-600 mb-3 bg-rose-100/80 p-2 rounded-xl border border-rose-200 text-center">
+                            ⚠️ {docErrors.photo}
+                          </p>
+                        )}
                       </div>
 
-                      <label className="btn-secondary !py-1.5 text-xs text-center cursor-pointer hover:bg-emerald-50 hover:text-emerald-800 flex items-center justify-center gap-1">
-                        <span>⬆️</span>
-                        <span>{photoPreview ? (isAr ? 'تغيير الصورة' : 'Change Photo') : (isAr ? 'اختيار صورة' : 'Choose Passport Photo')}</span>
+                      {/* Prominent High-Visibility Button */}
+                      <label className="w-full py-3 px-4 rounded-xl font-serif font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all bg-emerald-700 hover:bg-emerald-800 text-white ring-2 ring-emerald-600/30">
+                        <span>📸</span>
+                        <span>{photoPreview ? (isAr ? 'تغيير الصورة الشخصية' : 'Change Passport Photo') : (isAr ? 'رفع الصورة الشخصية للمتسابق *' : 'Upload Candidate Photo *')}</span>
                         <input type="file" accept="image/jpeg,image/png,image/jpg" className="hidden" onChange={handlePhotoSelect} />
                       </label>
                     </div>
 
-                    {/* 2. Identification Document */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between hover:border-sky-400 transition-all">
+                    {/* 2. Identification Document (Mandatory) */}
+                    <div className={`rounded-2xl p-5 border-2 transition-all flex flex-col justify-between shadow-sm ${
+                      docErrors.idDoc
+                        ? 'bg-rose-50/70 border-rose-400 ring-2 ring-rose-200'
+                        : idDocPreview
+                        ? 'bg-sky-50/40 border-sky-400'
+                        : 'bg-white border-dashed border-gray-300 hover:border-sky-500 hover:bg-sky-50/10'
+                    }`}>
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                        <div className={`flex items-center justify-between mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+                          <span className="font-serif font-bold text-sm text-gray-900 flex items-center gap-2">
                             <span>🪪</span>
-                            <span>{isAr ? 'وثيقة إثبات الهوية (ميلاد / هوية / جواز)' : 'Identification Document'}</span>
+                            <span>{isAr ? 'وثيقة إثبات الهوية' : 'Identification Document'}</span>
+                            <span className="text-rose-600 font-bold text-sm">*</span>
                           </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            idDocPreview ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                            idDocPreview ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300 animate-pulse'
                           }`}>
-                            {idDocPreview ? 'Selected ✓' : 'Optional'}
+                            {idDocPreview ? 'Selected ✓' : (isAr ? 'مطلوب *' : 'Required *')}
                           </span>
                         </div>
-                        <p className="text-[11px] text-gray-500 mb-3">Birth Certificate, ID Card or Passport (.pdf, .jpg, .png)</p>
+                        <p className="text-xs text-gray-500 mb-4">
+                          {isAr ? 'شهادة الميلاد، بطاقة الهوية الوطنية أو جواز السفر (.pdf, .jpg, .png)' : 'Birth Certificate, National ID Card, or Passport (.pdf, .jpg, .png)'}
+                        </p>
 
                         {/* Document Status Box */}
-                        <div className="rounded-xl border border-gray-200 bg-gray-50 h-24 flex flex-col items-center justify-center p-3 text-center mb-3">
+                        <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 h-28 flex flex-col items-center justify-center p-3 text-center mb-4 shadow-inner">
                           {idDocPreview ? (
                             <>
-                              <span className="text-xl">📄</span>
-                              <span className="text-xs font-bold text-emerald-800 truncate max-w-full mt-1">
-                                {idDocPreview.startsWith('http') ? 'ID Document Uploaded' : idDocPreview}
+                              <span className="text-3xl block mb-1">📄</span>
+                              <span className="text-xs font-bold text-sky-900 truncate max-w-full block">
+                                {idDocPreview.startsWith('http') ? (isAr ? 'وثيقة الهوية مرفوعة ✓' : 'ID Document Uploaded ✓') : idDocPreview}
                               </span>
+                              <span className="text-[10px] text-emerald-700 font-semibold block mt-0.5">Ready for S3 Sync</span>
                             </>
                           ) : (
                             <>
-                              <span className="text-xl text-gray-300">🪪</span>
-                              <span className="text-[11px] text-gray-400 mt-1">No document selected</span>
+                              <span className="text-3xl block mb-1 opacity-40">🪪</span>
+                              <span className="text-xs font-semibold text-gray-400 block">{isAr ? 'لم يتم إرفاق الوثيقة' : 'No document attached'}</span>
                             </>
                           )}
                         </div>
+
+                        {docErrors.idDoc && (
+                          <p className="text-xs font-semibold text-rose-600 mb-3 bg-rose-100/80 p-2 rounded-xl border border-rose-200 text-center">
+                            ⚠️ {docErrors.idDoc}
+                          </p>
+                        )}
                       </div>
 
-                      <label className="btn-secondary !py-1.5 text-xs text-center cursor-pointer hover:bg-sky-50 hover:text-sky-800 flex items-center justify-center gap-1">
-                        <span>⬆️</span>
-                        <span>{idDocPreview ? (isAr ? 'تغيير الوثيقة' : 'Change Document') : (isAr ? 'اختيار الوثيقة' : 'Attach Birth Cert / ID')}</span>
+                      {/* Prominent High-Visibility Button */}
+                      <label className="w-full py-3 px-4 rounded-xl font-serif font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all bg-sky-700 hover:bg-sky-800 text-white ring-2 ring-sky-600/30">
+                        <span>🪪</span>
+                        <span>{idDocPreview ? (isAr ? 'تغيير وثيقة الهوية' : 'Change ID Document') : (isAr ? 'رفع وثيقة الهوية (ميلاد / هوية / جواز) *' : 'Upload ID / Birth Cert *')}</span>
                         <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" className="hidden" onChange={handleIdDocSelect} />
                       </label>
                     </div>
@@ -1103,6 +1196,160 @@ export default function StudentsClient({
                   />
                 )}
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 6. Ultra-Premium Status, Error & Loading Pop Modal ── */}
+      <AnimatePresence>
+        {statusModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className={`relative max-w-lg w-full rounded-3xl overflow-hidden shadow-2xl border p-7 sm:p-8 text-center ${
+                statusModal.type === 'loading'
+                  ? 'bg-gradient-to-b from-[#181412] to-[#0d0a08] border-[#c99335]/30 text-white'
+                  : statusModal.type === 'error'
+                  ? 'bg-gradient-to-b from-[#1c1214] to-[#12080a] border-rose-500/40 text-white shadow-[0_0_60px_rgba(244,63,94,0.25)]'
+                  : 'bg-gradient-to-b from-[#0f1c14] to-[#08120b] border-emerald-500/40 text-white shadow-[0_0_60px_rgba(0,104,56,0.35)]'
+              }`}
+            >
+              {/* ── A: LOADING STATE ── */}
+              {statusModal.type === 'loading' && (
+                <div className="space-y-6">
+                  {/* Glowing Animated Ring */}
+                  <div className="relative w-20 h-20 mx-auto">
+                    <div className="absolute inset-0 rounded-full bg-[#c99335]/20 animate-ping" />
+                    <div className="w-20 h-20 rounded-full border-4 border-[#c99335]/30 border-t-[#c99335] animate-spin flex items-center justify-center shadow-[0_0_30px_rgba(201,147,53,0.3)]">
+                      <span className="text-2xl animate-pulse">🏛️</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-wide">
+                      {statusModal.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-stone-300 mt-2 leading-relaxed max-w-sm mx-auto">
+                      {statusModal.message}
+                    </p>
+                  </div>
+
+                  {statusModal.progressStep && (
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 max-w-sm mx-auto flex items-center justify-center gap-2.5">
+                      <div className="w-4 h-4 border-2 border-[#c99335] border-t-transparent rounded-full animate-spin shrink-0" />
+                      <span className="text-xs font-mono text-[#c99335] font-semibold">
+                        {statusModal.progressStep}
+                      </span>
+                    </div>
+                  )}
+
+                  <p className="text-[11px] text-stone-500 font-mono">
+                    {isAr ? 'يرجى الانتظار، جاري تشفير وحفظ البيانات في السحابة...' : 'Securing candidate records with AWS S3 storage…'}
+                  </p>
+                </div>
+              )}
+
+              {/* ── B: ERROR STATE ── */}
+              {statusModal.type === 'error' && (
+                <div className="space-y-6">
+                  {/* Glowing Warning Shield */}
+                  <div className="w-16 h-16 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center mx-auto text-3xl shadow-[0_0_30px_rgba(244,63,94,0.3)] animate-bounce">
+                    ⚠️
+                  </div>
+
+                  <div>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-wide">
+                      {statusModal.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-rose-200 mt-2.5 font-medium leading-relaxed max-w-sm mx-auto bg-rose-950/40 border border-rose-800/40 rounded-2xl p-4">
+                      {statusModal.message}
+                    </p>
+                  </div>
+
+                  {statusModal.subMessage && (
+                    <p className="text-xs text-stone-400 leading-relaxed max-w-sm mx-auto">
+                      {statusModal.subMessage}
+                    </p>
+                  )}
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setStatusModal(null)}
+                      className="w-full py-3.5 px-6 rounded-2xl font-serif font-bold text-xs uppercase tracking-widest bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    >
+                      {isAr ? 'مراجعة وتصحيح البيانات' : 'Review & Correct Fields'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── C: SUCCESS STATE ── */}
+              {statusModal.type === 'success' && (
+                <div className="space-y-6">
+                  {/* Glowing Check Shield */}
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto text-3xl shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                    ✓
+                  </div>
+
+                  <div>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-wide">
+                      {statusModal.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-emerald-200 mt-2 leading-relaxed max-w-sm mx-auto">
+                      {statusModal.message}
+                    </p>
+                  </div>
+
+                  {statusModal.student && (
+                    <div className="bg-white/5 border border-emerald-500/30 rounded-2xl p-4 max-w-sm mx-auto text-left space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-emerald-700 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          {statusModal.student.photo ? (
+                            <Image src={statusModal.student.photo} alt={statusModal.student.full_name} fill className="object-cover" />
+                          ) : (
+                            statusModal.student.full_name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-sm text-white truncate">{statusModal.student.full_name}</h4>
+                          <p className="text-[10px] font-mono text-stone-400">REF-{String(statusModal.student.id).padStart(4, '0')} · {statusModal.student.national_id}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    {statusModal.student && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const s = statusModal.student!
+                          setStatusModal(null)
+                          handleDownloadPdf(s)
+                        }}
+                        className="flex-1 py-3 px-5 rounded-2xl font-serif font-bold text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <span>📄</span>
+                        <span>{isAr ? 'تحميل بطاقة الامتحان (PDF)' : 'Download PDF Pass'}</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setStatusModal(null)}
+                      className="py-3 px-6 rounded-2xl font-serif font-semibold text-xs uppercase tracking-wider bg-white/10 hover:bg-white/20 text-stone-300 hover:text-white transition-all cursor-pointer"
+                    >
+                      {isAr ? 'إغلاق وعرض القائمة' : 'Done & View Roster'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
             </motion.div>
           </div>
         )}
