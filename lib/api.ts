@@ -68,6 +68,67 @@ export async function loginInstitution(email: string, password: string): Promise
   return res.json()
 }
 
+export interface RequestOtpPayload {
+  institution_id: number
+  channel: 'SMS' | 'EMAIL'
+  contact_input?: string
+}
+
+export interface VerifyOtpPayload {
+  institution_id: number
+  code: string
+  channel: 'SMS' | 'EMAIL'
+  contact_input?: string
+}
+
+export interface VerifyOtpResponse {
+  access_token: string
+  token_type: string
+  institution_id: number
+  institution_name: string
+  remaining_spots: number
+}
+
+export async function requestInstitutionOtp(data: RequestOtpPayload): Promise<{ message: string; channel: string; target_masked: string }> {
+  return request('/api/v1/auth/institution/request-otp', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function verifyInstitutionOtp(data: VerifyOtpPayload): Promise<VerifyOtpResponse> {
+  return request('/api/v1/auth/institution/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+// ─── Institutions Directory ──────────────────────────────────────────────────
+
+export interface InstitutionDirectoryItem {
+  id: number
+  name: string
+  type: string
+  contact_person: string
+  obscured_phone?: string
+  obscured_email?: string
+  masked_phone?: string
+  masked_email?: string
+  region_id?: number | null
+  county_id?: number | null
+  county_name?: string | null
+  region_name_en?: string | null
+  region_name_ar?: string | null
+  available_spots?: number
+  remaining_spots?: number
+  active_students_count?: number
+  total_spots?: number
+}
+
+export async function listInstitutionDirectory(): Promise<InstitutionDirectoryItem[]> {
+  return request('/api/v1/institutions/directory')
+}
+
 // ─── Institutions ─────────────────────────────────────────────────────────────
 
 export interface InstitutionCreate {
@@ -300,4 +361,33 @@ export function getWsUrl(categoryId: number): string {
   const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
     .replace(/^http/, 'ws')
   return `${base}/ws/leaderboard/${categoryId}`
+}
+
+// ─── Competitions ─────────────────────────────────────────────────────────────
+
+export interface CompetitionRead {
+  id: number
+  title_en: string
+  title_ar: string
+  edition_label: string
+  year: number
+  host_org: string
+  host_org_name_en: string
+  host_org_name_ar: string
+  status: 'DRAFT' | 'ACTIVE' | 'SCORING' | 'COMPLETED' | 'ARCHIVED'
+  is_current: boolean
+  scope: string
+  start_date: string | null
+  end_date: string | null
+  registration_deadline: string | null
+  grand_finale_date: string | null
+  venue_en: string | null
+  venue_ar: string | null
+  banner_url: string | null
+  theme_image_url: string | null
+}
+
+export async function listCompetitions(status?: string): Promise<CompetitionRead[]> {
+  const query = status ? `?status=${status}` : ''
+  return request(`/api/v1/competitions${query}`)
 }

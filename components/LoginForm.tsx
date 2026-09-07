@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { loginInstitution, ApiError } from '@/lib/api'
 import type en from '@/dictionaries/en.json'
-import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react'
 
 type Dict = typeof en
 
@@ -141,6 +141,23 @@ export default function LoginForm({ dict, lang }: { dict: Dict; lang: string }) 
           </>
         )}
       </button>
+
+      {/* Roster OTP Login Fast-Track shortcut */}
+      <div className="p-3.5 rounded-xl bg-sky-950/40 border border-sky-500/30 flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2 text-sky-300">
+          <Sparkles size={14} className="text-sky-400" />
+          <span className="font-semibold">
+            {isAr ? 'مدرج في كشف الأمانة العامة؟' : 'Listed on the Secretariat Roster?'}
+          </span>
+        </div>
+        <Link
+          href={`/${lang}/register?option=3`}
+          className="text-white hover:text-sky-300 font-bold underline transition-colors flex items-center gap-1"
+        >
+          <span>{isAr ? 'الدخول عبر رمز OTP' : 'Login via OTP'}</span>
+          <span>&rarr;</span>
+        </Link>
+      </div>
 
       {/* Footer Navigation */}
       <div className="pt-4 border-t border-white/5 space-y-3">

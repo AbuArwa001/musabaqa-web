@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
+import { AlertCircle } from 'lucide-react'
 import { registerInstitution, uploadInstitutionDocument, ApiError, type County, type Region } from '@/lib/api'
 import type en from '@/dictionaries/en.json'
 
@@ -171,6 +172,21 @@ export default function RegisterForm({
 
   return (
     <div className="card p-8 sm:p-10 shadow-2xl border-[#c99335]/20 relative overflow-hidden">
+      {/* Early Registration Advisory Notice */}
+      <div className="mb-8 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-200/90 text-xs relative z-10">
+        <AlertCircle size={18} className="shrink-0 text-amber-400 mt-0.5" />
+        <div>
+          <p className="font-semibold text-amber-300 mb-0.5">
+            {isAr ? 'تنبيه هام حول التسجيل المبكر:' : 'Important Advisory on Early Application:'}
+          </p>
+          <p className="leading-relaxed">
+            {isAr
+              ? 'يرجى تقديم طلب تسجيل المؤسسة في أبكر وقت ممكن قبل بدء المسابقة، حيث إن إجراءات التدقيق والتحقق من الوثائق الرسمية من قبل لجنة المسابقة قد تستغرق وقتاً إضافياً.'
+              : 'Please submit your institution application as early as possible before the competition begins, as the committee vetting and accreditation verification process may take time.'}
+          </p>
+        </div>
+      </div>
+
       {/* Step Indicator */}
       <div className={`flex items-center justify-between mb-10 relative z-10 ${isAr ? 'flex-row-reverse' : ''}`}>
         {[1, 2, 3].map((s) => (

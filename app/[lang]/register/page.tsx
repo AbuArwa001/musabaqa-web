@@ -1,16 +1,28 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { isValidLocale, getDictionary } from '@/lib/dictionaries'
-import { listCounties, listRegions, type County, type Region } from '@/lib/api'
-import RegisterForm from '@/components/RegisterForm'
+import {
+  listCounties,
+  listRegions,
+  listInstitutionDirectory,
+  listCompetitions,
+  listCategories,
+  type County,
+  type Region,
+  type InstitutionDirectoryItem,
+  type CompetitionRead,
+  type Category,
+} from '@/lib/api'
+import RegisterClient from '@/components/registration/RegisterClient'
 
 export async function generateMetadata(props: PageProps<'/[lang]/register'>): Promise<Metadata> {
   const { lang } = await props.params
   return {
-    title: lang === 'ar' ? 'تسجيل المؤسسة' : 'Register Institution',
+    title: lang === 'ar' ? 'تسجيل المؤسسات والمتسابقين' : 'Institution & Contestant Registration',
     description: lang === 'ar'
-      ? 'سجّل مؤسستك للمشاركة في مسابقة حفظ القرآن'
-      : 'Register your institution to participate in the Musabaqa',
+      ? 'سجّل مؤسستك أو طلابك للمشاركة في مسابقة حفظ القرآن الكريم'
+      : 'Register your madrasa or candidate students for the annual Quran Musabaqa',
   }
 }
 
@@ -20,16 +32,19 @@ export default async function RegisterPage(props: PageProps<'/[lang]/register'>)
 
   const dict = await getDictionary(lang)
 
-  const [counties, regions] = await Promise.all([
+  const [counties, regions, institutions, competitions, categories] = await Promise.all([
     listCounties().catch(() => [] as County[]),
     listRegions().catch(() => [] as Region[]),
+    listInstitutionDirectory().catch(() => [] as InstitutionDirectoryItem[]),
+    listCompetitions().catch(() => [] as CompetitionRead[]),
+    listCategories().catch(() => [] as Category[]),
   ])
 
   const isAr = lang === 'ar'
 
   return (
     <div className="min-h-screen px-4 pt-28 pb-16">
-      <div className="max-w-lg mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className={`text-center mb-10 ${isAr ? 'text-right' : ''}`}>
           {/* Logo emblem */}
@@ -51,11 +66,25 @@ export default async function RegisterPage(props: PageProps<'/[lang]/register'>)
             </span>
             <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#c99335]/50" />
           </div>
-          <h1 className="font-serif text-3xl font-bold text-white mb-2">{dict.register.title}</h1>
-          <p className="text-stone-400">{dict.register.subtitle}</p>
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white mb-2">
+            {dict.register.title}
+          </h1>
+          <p className="text-stone-400 max-w-xl mx-auto text-sm sm:text-base">
+            {dict.register.subtitle}
+          </p>
         </div>
 
-        <RegisterForm dict={dict} counties={counties} regions={regions} lang={lang} />
+        <Suspense fallback={<div className="text-center py-12 text-stone-500">Loading registration options...</div>}>
+          <RegisterClient
+            counties={counties}
+            regions={regions}
+            institutions={institutions}
+            competitions={competitions}
+            categories={categories}
+            dict={dict}
+            lang={lang}
+          />
+        </Suspense>
       </div>
     </div>
   )
