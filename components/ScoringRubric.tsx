@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import TierEmblem from '@/components/TierEmblem'
 import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
@@ -431,7 +432,7 @@ export default function ScoringRubric({ lang, dict }: ScoringRubricProps) {
                   />
                 )}
 
-                <span className="text-2xl sm:text-3xl filter drop-shadow-md">{cat.icon}</span>
+                <TierEmblem id={cat.id} isSelected={isSelected} size="md" />
 
                 <div>
                   <h4 className={`font-serif text-sm sm:text-base font-bold ${isSelected ? 'text-white' : 'text-stone-300'}`}>
@@ -499,7 +500,7 @@ export default function ScoringRubric({ lang, dict }: ScoringRubricProps) {
             <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-white/10 ${isAr ? 'md:flex-row-reverse text-right' : ''}`}>
               <div>
                 <div className={`flex items-center gap-3 flex-wrap mb-2 ${isAr ? 'flex-row-reverse' : ''}`}>
-                  <span className="text-2xl">{activeCategory.icon}</span>
+                  <TierEmblem id={activeCategory.id} isSelected={true} size="sm" />
                   <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
                     {isAr ? activeCategory.name_ar : activeCategory.name_en}
                   </h3>
