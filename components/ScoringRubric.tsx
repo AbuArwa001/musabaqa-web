@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import TierEmblem from '@/components/TierEmblem'
+import { Target, Clock, Users, Zap, ShieldCheck, Scale, Info, Check } from 'lucide-react'
 import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
@@ -512,9 +513,15 @@ export default function ScoringRubric({ lang, dict }: ScoringRubricProps) {
                   {isAr ? activeCategory.description_ar : activeCategory.description_en}
                 </p>
                 <div className={`flex items-center gap-4 mt-3 text-xs text-stone-400 font-mono ${isAr ? 'flex-row-reverse' : ''}`}>
-                  <span>🎯 {isAr ? activeCategory.questions_ar : activeCategory.questions_en}</span>
+                  <span className="flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5 text-[#c99335] shrink-0" />
+                    <span>{isAr ? activeCategory.questions_ar : activeCategory.questions_en}</span>
+                  </span>
                   <span>•</span>
-                  <span>⏱️ {isAr ? activeCategory.duration_ar : activeCategory.duration_en}</span>
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                    <span>{isAr ? activeCategory.duration_ar : activeCategory.duration_en}</span>
+                  </span>
                 </div>
               </div>
 
@@ -590,17 +597,20 @@ export default function ScoringRubric({ lang, dict }: ScoringRubricProps) {
             {/* ── View 2: Detailed Deductions Matrix ── */}
             {activeViewMode === 'deductions' && (
               <div className="mt-8 space-y-6">
-                <div className="p-4 rounded-xl bg-[#c99335]/10 border border-[#c99335]/20 text-xs text-[#f6cb7d] leading-relaxed">
-                  💡 {isAr
-                    ? 'جدول الخصومات القياسي المعتمد في المنظومة الرقمية: يُسجل كل محكم الخصومات فورياً، وتُحسب الدرجات بصورة آلية دون تدخل بشري.'
-                    : 'Official computerized deduction standard: Judges tap individual error triggers on their tablets, and composite scores are calculated automatically in real time.'}
+                <div className="p-4 rounded-xl bg-[#c99335]/10 border border-[#c99335]/20 text-xs text-[#f6cb7d] leading-relaxed flex items-center gap-2">
+                  <Info className="w-4 h-4 text-[#f6cb7d] shrink-0" />
+                  <span>
+                    {isAr
+                      ? 'جدول الخصومات القياسي المعتمد في المنظومة الرقمية: يُسجل كل محكم الخصومات فورياً، وتُحسب الدرجات بصورة آلية دون تدخل بشري.'
+                      : 'Official computerized deduction standard: Judges tap individual error triggers on their tablets, and composite scores are calculated automatically in real time.'}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {DEDUCTIONS_TABLE.map((section, sIdx) => (
                     <div key={sIdx} className="bg-black/60 border border-white/10 rounded-2xl p-6">
                       <h4 className={`font-serif font-bold text-base text-white mb-4 flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
-                        <span className="text-[#c99335]">⚖️</span>
+                        <Scale className="w-4 h-4 text-[#c99335] shrink-0" />
                         <span>{isAr ? section.category_ar : section.category_en}</span>
                       </h4>
 
@@ -636,8 +646,8 @@ export default function ScoringRubric({ lang, dict }: ScoringRubricProps) {
               <div className="mt-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="p-6 rounded-2xl bg-black/60 border border-emerald-500/30">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mb-4 border border-emerald-500/30">
-                      👨‍⚖️
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4 border border-emerald-500/30">
+                      <Users className="w-6 h-6" />
                     </div>
                     <h4 className="font-serif font-bold text-white text-base mb-2">
                       {isAr ? 'هيئة تحكيم ثلاثية مستقلة' : 'Triple-Judge Bench'}
@@ -650,8 +660,8 @@ export default function ScoringRubric({ lang, dict }: ScoringRubricProps) {
                   </div>
 
                   <div className="p-6 rounded-2xl bg-black/60 border border-[#c99335]/30">
-                    <div className="w-12 h-12 rounded-xl bg-[#c99335]/20 text-[#f6cb7d] flex items-center justify-center text-2xl mb-4 border border-[#c99335]/30">
-                      ⚡
+                    <div className="w-12 h-12 rounded-xl bg-[#c99335]/20 text-[#f6cb7d] flex items-center justify-center mb-4 border border-[#c99335]/30">
+                      <Zap className="w-6 h-6" />
                     </div>
                     <h4 className="font-serif font-bold text-white text-base mb-2">
                       {isAr ? 'خوارزمية رصد التباين الآلي' : 'Automated Outlier Detection'}
@@ -664,8 +674,8 @@ export default function ScoringRubric({ lang, dict }: ScoringRubricProps) {
                   </div>
 
                   <div className="p-6 rounded-2xl bg-black/60 border border-sky-500/30">
-                    <div className="w-12 h-12 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-2xl mb-4 border border-sky-500/30">
-                      🛡️
+                    <div className="w-12 h-12 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center mb-4 border border-sky-500/30">
+                      <ShieldCheck className="w-6 h-6" />
                     </div>
                     <h4 className="font-serif font-bold text-white text-base mb-2">
                       {isAr ? 'سحب الأسئلة الرقمي العشوائي' : 'Computerized Question Draw'}
@@ -681,7 +691,9 @@ export default function ScoringRubric({ lang, dict }: ScoringRubricProps) {
                 {/* Bottom Juror Oath Banner */}
                 <div className={`p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-black/60 to-emerald-950/40 border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isAr ? 'sm:flex-row-reverse text-right' : ''}`}>
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">⚖️</span>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shrink-0">
+                      <Scale className="w-5 h-5" />
+                    </div>
                     <div>
                       <h5 className="font-serif font-bold text-sm text-white">
                         {isAr ? 'ميثاق الأمانة والحيادية المعتمد' : 'Solemn Oath of Impartiality'}
@@ -694,8 +706,9 @@ export default function ScoringRubric({ lang, dict }: ScoringRubricProps) {
                     </div>
                   </div>
 
-                  <div className="text-xs font-mono font-semibold text-emerald-400 bg-emerald-950/80 px-3.5 py-1.5 rounded-lg border border-emerald-700/50 self-start sm:self-auto shrink-0">
-                    {isAr ? 'معتمد رسمياً ✓' : 'Audited Protocol ✓'}
+                  <div className="text-xs font-mono font-semibold text-emerald-400 bg-emerald-950/80 px-3.5 py-1.5 rounded-lg border border-emerald-700/50 self-start sm:self-auto shrink-0 flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{isAr ? 'معتمد رسمياً' : 'Audited Protocol'}</span>
                   </div>
                 </div>
               </div>

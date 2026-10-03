@@ -3,6 +3,26 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import {
+  Trophy,
+  Medal,
+  Award,
+  Crown,
+  Calendar,
+  MapPin,
+  FileText,
+  Mic,
+  BookOpen,
+  Scroll,
+  Sparkles,
+  Landmark,
+  Radio,
+  Tv,
+  Armchair,
+  Zap,
+  Users,
+  Headphones,
+} from 'lucide-react'
 import type en from '@/dictionaries/en.json'
 
 type Dict = typeof en
@@ -24,7 +44,10 @@ interface StageItem {
   location_ar: string
   desc_en: string
   desc_ar: string
-  icon: string
+  Icon: React.ComponentType<{ className?: string }>
+  iconColor: string
+  iconBg: string
+  iconBorder: string
   status_en: string
   status_ar: string
   highlight?: boolean
@@ -35,13 +58,14 @@ interface PrizeTier {
   rank_ar: string
   title_en: string
   title_ar: string
-  medal: string
+  Icon: React.ComponentType<{ className?: string }>
   metalColor: string
   borderClass: string
   glowClass: string
   bgGradient: string
   badgeBg: string
   badgeText: string
+  iconContainerBg: string
   awards_en: string[]
   awards_ar: string[]
   special_en?: string
@@ -60,13 +84,14 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
       rank_ar: 'المركز الأول',
       title_en: 'Grand Champion',
       title_ar: 'بطل المسابقة — تاج الوقار',
-      medal: '🥇',
+      Icon: Trophy,
       metalColor: 'text-[#f6cb7d]',
       borderClass: 'border-[#c99335]/70 hover:border-[#f6cb7d]',
       glowClass: 'shadow-[0_0_35px_rgba(201,147,53,0.3)]',
       bgGradient: 'from-[#2a1c0d]/90 via-[#18120c]/90 to-black/90',
       badgeBg: 'bg-[#c99335]/25 border border-[#c99335]/50',
       badgeText: 'text-[#f6cb7d]',
+      iconContainerBg: 'bg-gradient-to-br from-[#c99335]/30 to-amber-950/60 border border-[#c99335]/60 text-[#f6cb7d] shadow-[0_0_20px_rgba(201,147,53,0.35)]',
       awards_en: [
         'Musabaqa Championship Grand Trophy',
         'Official Jamia Mosque Gold Medallion',
@@ -89,13 +114,14 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
       rank_ar: 'المركز الثاني',
       title_en: 'First Runner-Up',
       title_ar: 'الوصيف الأول — وسام الإتقان',
-      medal: '🥈',
+      Icon: Medal,
       metalColor: 'text-stone-200',
       borderClass: 'border-stone-400/40 hover:border-stone-300',
       glowClass: 'shadow-[0_0_25px_rgba(226,232,240,0.15)]',
       bgGradient: 'from-stone-900/90 via-[#141212]/90 to-black/90',
       badgeBg: 'bg-stone-800/80 border border-stone-600/50',
       badgeText: 'text-stone-200',
+      iconContainerBg: 'bg-stone-800/80 border border-stone-500/50 text-stone-200 shadow-[0_0_15px_rgba(226,232,240,0.15)]',
       awards_en: [
         'Silver Cup of Quranic Excellence',
         'Official Jamia Mosque Silver Medallion',
@@ -116,13 +142,14 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
       rank_ar: 'المركز الثالث',
       title_en: 'Second Runner-Up',
       title_ar: 'المرتبة الثالثة — وسام الاستحقاق',
-      medal: '🥉',
+      Icon: Award,
       metalColor: 'text-amber-400',
       borderClass: 'border-amber-700/40 hover:border-amber-600',
       glowClass: 'shadow-[0_0_25px_rgba(217,119,6,0.15)]',
       bgGradient: 'from-[#1f150f]/90 via-[#140f0c]/90 to-black/90',
       badgeBg: 'bg-amber-950/60 border border-amber-700/40',
       badgeText: 'text-amber-300',
+      iconContainerBg: 'bg-amber-950/60 border border-amber-700/50 text-amber-400 shadow-[0_0_15px_rgba(217,119,6,0.15)]',
       awards_en: [
         'Bronze Cup of Quranic Merit',
         'Official Jamia Mosque Bronze Medallion',
@@ -153,7 +180,10 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
       location_ar: 'البوابة الرقمية وسكرتارية المسجد',
       desc_en: 'Madrasas and institutions register officially and submit candidate lists across the four tier categories with documentation verification.',
       desc_ar: 'تسجيل المدارس الدينية والمراكز القرآنية ورفع قوائم الطلاب المعتمدة ضمن الفئات الأربع واستكمال الوثائق.',
-      icon: '📋',
+      Icon: FileText,
+      iconColor: 'text-amber-400',
+      iconBg: 'bg-amber-500/10',
+      iconBorder: 'border-amber-500/30',
       status_en: 'Active',
       status_ar: 'مستمر حالياً',
     },
@@ -169,7 +199,10 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
       location_ar: 'مركز تدريب مسجد جامع نيروبي',
       desc_en: 'Candidates undergo standard diagnostic recall and basic Tajweed assessments by senior examiners to qualify for the main stage.',
       desc_ar: 'خضوع المتسابقين لاختبارات استذكار تشخيصية وضبط أحكام التجويد من قبل شيوخ ولجان فرعية للتأهل للجولات الرئيسية.',
-      icon: '🎙️',
+      Icon: Mic,
+      iconColor: 'text-sky-400',
+      iconBg: 'bg-sky-500/10',
+      iconBorder: 'border-sky-500/30',
       status_en: 'Upcoming',
       status_ar: 'قريباً',
     },
@@ -185,7 +218,10 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
       location_ar: 'الصحن الرئيسي لمسجد جامع نيروبي',
       desc_en: 'Finalists recite live before the esteemed panel of three independent Qira\'at scholars with computerized real-time scoring.',
       desc_ar: 'تنافس المتأهلين على المنبر أمام لجنة التحكيم الثلاثية المعتمدة مع رصد الدرجات عبر المنظومة الإلكترونية الموحدة.',
-      icon: '📖',
+      Icon: BookOpen,
+      iconColor: 'text-emerald-400',
+      iconBg: 'bg-emerald-500/10',
+      iconBorder: 'border-emerald-500/30',
       status_en: 'Championship',
       status_ar: 'المرحلة الكبرى',
       highlight: true,
@@ -202,7 +238,10 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
       location_ar: 'القاعة الكبرى مع بث مباشر على هورايزون TV',
       desc_en: 'Announcement of winners, distribution of cash awards, medallions, institutional shields, and closing du\'a with national dignitaries.',
       desc_ar: 'إعلان النتائج النهائية وتوزيع الجوائز الكبرى والأوسمة والدروع وتكريم الشيوخ والمدارس بحضور كبار العلماء والشخصيات.',
-      icon: '👑',
+      Icon: Crown,
+      iconColor: 'text-[#f6cb7d]',
+      iconBg: 'bg-[#c99335]/15',
+      iconBorder: 'border-[#c99335]/40',
       status_en: 'Ceremony',
       status_ar: 'حفل الختام',
     },
@@ -249,7 +288,7 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
                   : 'text-stone-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span>🏆</span>
+              <Trophy className="w-4 h-4 shrink-0" />
               <span>{isAr ? 'الجوائز والتكريم' : 'Prizes & Awards'}</span>
             </button>
 
@@ -261,7 +300,7 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
                   : 'text-stone-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span>📅</span>
+              <Calendar className="w-4 h-4 shrink-0" />
               <span>{isAr ? 'المراحل والجدول الزمني' : 'Competition Timeline'}</span>
             </button>
 
@@ -273,7 +312,7 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
                   : 'text-stone-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span>📍</span>
+              <Landmark className="w-4 h-4 shrink-0" />
               <span>{isAr ? 'المقر والتغطية المباشرة' : 'Venue & Facilities'}</span>
             </button>
           </div>
@@ -307,12 +346,12 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
                     )}
 
                     <div>
-                      {/* Medal Icon & Rank Header */}
+                      {/* Icon & Rank Header */}
                       <div className={`flex items-center justify-between gap-4 mb-6 ${isAr ? 'flex-row-reverse' : ''}`}>
                         <div className="flex items-center gap-3">
-                          <span className="text-4xl sm:text-5xl filter drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]">
-                            {tier.medal}
-                          </span>
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${tier.iconContainerBg}`}>
+                            <tier.Icon className="w-7 h-7" />
+                          </div>
                           <div>
                             <span className="text-xs uppercase tracking-widest text-stone-400 font-mono block">
                               {isAr ? tier.rank_ar : tier.rank_en}
@@ -346,8 +385,9 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
                     {tier.special_en && (
                       <div className="mt-8 pt-4 border-t border-white/10">
                         <div className="p-3 rounded-xl bg-[#c99335]/15 border border-[#c99335]/30 text-center">
-                          <p className="text-[11px] sm:text-xs text-[#f6cb7d] font-medium leading-relaxed">
-                            ⭐ {isAr ? tier.special_ar : tier.special_en}
+                          <p className="text-[11px] sm:text-xs text-[#f6cb7d] font-medium leading-relaxed flex items-center justify-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 shrink-0 text-[#f6cb7d]" />
+                            <span>{isAr ? tier.special_ar : tier.special_en}</span>
                           </p>
                         </div>
                       </div>
@@ -362,8 +402,8 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
                   
                   {/* Commemorative Mushaf */}
                   <div className={`flex items-center gap-4 ${isAr ? 'text-right flex-row-reverse md:pl-6' : 'md:pr-6'}`}>
-                    <div className="w-12 h-12 rounded-2xl bg-[#c99335]/20 border border-[#c99335]/40 flex items-center justify-center text-2xl shrink-0">
-                      📖
+                    <div className="w-12 h-12 rounded-2xl bg-[#c99335]/20 border border-[#c99335]/40 flex items-center justify-center text-[#f6cb7d] shrink-0">
+                      <BookOpen className="w-6 h-6" />
                     </div>
                     <div>
                       <h4 className="font-serif font-bold text-white text-sm sm:text-base">
@@ -379,8 +419,8 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
 
                   {/* Certified Huffaz Certificates */}
                   <div className={`pt-4 md:pt-0 flex items-center gap-4 ${isAr ? 'text-right flex-row-reverse md:px-6' : 'md:px-6'}`}>
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-2xl shrink-0">
-                      📜
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                      <Scroll className="w-6 h-6" />
                     </div>
                     <div>
                       <h4 className="font-serif font-bold text-white text-sm sm:text-base">
@@ -396,8 +436,8 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
 
                   {/* Special Awards for Best Saut & Youngest Hafidh */}
                   <div className={`pt-4 md:pt-0 flex items-center gap-4 ${isAr ? 'text-right flex-row-reverse md:pr-0 md:pl-6' : 'md:pl-6'}`}>
-                    <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-2xl shrink-0">
-                      ✨
+                    <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shrink-0">
+                      <Sparkles className="w-6 h-6" />
                     </div>
                     <div>
                       <h4 className="font-serif font-bold text-white text-sm sm:text-base">
@@ -442,7 +482,9 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
                         <span className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-mono font-bold text-sm text-[#c99335]">
                           {stg.number}
                         </span>
-                        <span className="text-2xl">{stg.icon}</span>
+                        <div className={`w-10 h-10 rounded-xl ${stg.iconBg} ${stg.iconBorder} border flex items-center justify-center ${stg.iconColor}`}>
+                          <stg.Icon className="w-5 h-5" />
+                        </div>
                       </div>
 
                       <span className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${
@@ -467,12 +509,12 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
                     {/* Metadata Footer */}
                     <div className="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className={`flex items-center gap-2 text-stone-400 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                        <span className="text-[#c99335]">📅</span>
+                        <Calendar className="w-3.5 h-3.5 text-[#c99335] shrink-0" />
                         <span className="font-mono">{isAr ? stg.date_ar : stg.date_en}</span>
                       </div>
 
                       <div className={`flex items-center gap-2 text-stone-400 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                        <span className="text-emerald-400">📍</span>
+                        <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                         <span className="truncate">{isAr ? stg.location_ar : stg.location_en}</span>
                       </div>
                     </div>
@@ -505,7 +547,7 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
               <div className="bg-gradient-to-br from-stone-900/90 via-[#181310]/90 to-black/90 border border-[#c99335]/30 rounded-3xl p-8 backdrop-blur-xl relative overflow-hidden flex flex-col justify-between">
                 <div>
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c99335]/15 border border-[#c99335]/30 text-[#f6cb7d] text-xs font-semibold uppercase tracking-wider mb-6">
-                    <span>🕌</span>
+                    <Landmark className="w-3.5 h-3.5" />
                     <span>{isAr ? 'مقر المسابقة الرسمي' : 'Official Musabaqa Venue'}</span>
                   </div>
 
@@ -521,17 +563,17 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
 
                   <div className="space-y-3 pt-2">
                     <div className={`flex items-start gap-3 text-xs sm:text-sm text-stone-300 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                      <span className="text-[#c99335] mt-0.5">📌</span>
+                      <MapPin className="w-4 h-4 text-[#c99335] shrink-0 mt-0.5" />
                       <span><strong>{isAr ? 'الموقع:' : 'Location:'}</strong> {isAr ? 'شارع باندا، وسط مدينة نيروبي (CBD)' : 'Banda Street, City Square, Nairobi CBD'}</span>
                     </div>
 
                     <div className={`flex items-start gap-3 text-xs sm:text-sm text-stone-300 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                      <span className="text-emerald-400 mt-0.5">🎧</span>
+                      <Headphones className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span><strong>{isAr ? 'البيئة الصوتية:' : 'Acoustics:'}</strong> {isAr ? 'أنظمة صوت رقمية نقية مخصصة للترتيل وأحكام التجويد' : 'High-fidelity acoustic isolation optimized for Tajweed precision'}</span>
                     </div>
 
                     <div className={`flex items-start gap-3 text-xs sm:text-sm text-stone-300 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                      <span className="text-sky-400 mt-0.5">👥</span>
+                      <Users className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
                       <span><strong>{isAr ? 'مدرجات الضيوف:' : 'Guest Seating:'}</strong> {isAr ? 'أجنحة مخصصة للجمهور والمشايخ وأولياء الأمور' : 'Designated galleries for attendees, teachers, and guardians'}</span>
                     </div>
                   </div>
@@ -555,7 +597,7 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
               <div className="bg-gradient-to-br from-black/80 via-stone-900/80 to-black/80 border border-white/10 rounded-3xl p-8 backdrop-blur-xl flex flex-col justify-between">
                 <div>
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-6">
-                    <span>📡</span>
+                    <Radio className="w-3.5 h-3.5" />
                     <span>{isAr ? 'البث المباشر والخدمات' : 'Broadcast & Participant Services'}</span>
                   </div>
 
@@ -566,7 +608,9 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
                   <div className="space-y-4">
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
                       <div className={`flex items-center gap-3 mb-1 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                        <span className="text-lg">📺</span>
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                          <Tv className="w-4 h-4" />
+                        </div>
                         <h4 className="font-serif font-bold text-white text-sm">
                           {isAr ? 'بث حي عالي الدقة (HD)' : 'High-Definition Live Broadcast'}
                         </h4>
@@ -580,7 +624,9 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
 
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
                       <div className={`flex items-center gap-3 mb-1 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                        <span className="text-lg">🛋️</span>
+                        <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+                          <Armchair className="w-4 h-4" />
+                        </div>
                         <h4 className="font-serif font-bold text-white text-sm">
                           {isAr ? 'غرف المراجعة والراحة للمتسابقين' : 'Quiet Pre-Stage Rehearsal Suites'}
                         </h4>
@@ -594,7 +640,9 @@ export default function ScheduleAndPrizes({ lang, dict }: ScheduleAndPrizesProps
 
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
                       <div className={`flex items-center gap-3 mb-1 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-                        <span className="text-lg">⚡</span>
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                          <Zap className="w-4 h-4" />
+                        </div>
                         <h4 className="font-serif font-bold text-white text-sm">
                           {isAr ? 'شاشات النتائج اللحظية' : 'Real-time Onsite & Online Leaderboards'}
                         </h4>
