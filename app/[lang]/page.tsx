@@ -5,6 +5,7 @@ import { getDictionary, isValidLocale } from '@/lib/dictionaries'
 import Countdown from '@/components/Countdown'
 import HomeHero from '@/components/HomeHero'
 import ScoringRubric from '@/components/ScoringRubric'
+import ScheduleAndPrizes from '@/components/ScheduleAndPrizes'
 
 export async function generateMetadata(props: PageProps<'/[lang]'>): Promise<Metadata> {
   const { lang } = await props.params
@@ -184,60 +185,7 @@ export default async function HomePage(props: PageProps<'/[lang]'>) {
       <ScoringRubric lang={lang} dict={dict} />
 
       {/* ── Schedule & Prizes ── */}
-      <section className="relative py-24 px-4 border-t border-white/5 bg-gradient-to-b from-[#120e0c] to-[#0a0807]">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
-
-          {/* Schedule */}
-          <div className="space-y-8">
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white">{t.schedule_title}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-stone-900/50 border border-white/5 rounded-2xl p-6 flex flex-col items-start gap-4 hover:bg-stone-900/80 transition-colors group">
-                <div className="p-3 bg-emerald-500/10 group-hover:bg-emerald-500/20 rounded-xl text-emerald-400 transition-colors">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-stone-500 text-xs uppercase tracking-widest font-semibold mb-1">Venue</p>
-                  <p className="text-lg font-medium text-stone-200">{t.schedule_venue}</p>
-                </div>
-              </div>
-              <div className="bg-stone-900/50 border border-white/5 rounded-2xl p-6 flex flex-col items-start gap-4 hover:bg-stone-900/80 transition-colors group">
-                <div className="p-3 bg-[#c99335]/10 group-hover:bg-[#c99335]/20 rounded-xl text-[#c99335] transition-colors">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-stone-500 text-xs uppercase tracking-widest font-semibold mb-1">Date</p>
-                  <p className="text-lg font-medium text-stone-200">{t.schedule_date}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Prizes */}
-          <div className="space-y-8">
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white">{t.prizes_title}</h2>
-            <p className="text-stone-400 leading-relaxed">{t.prizes_body}</p>
-            <div className="flex gap-4 sm:gap-8 pt-4">
-              {(['🥇', '🥈', '🥉'] as const).map((medal, i) => (
-                <div
-                  key={i}
-                  className="flex-1 bg-gradient-to-b from-stone-800/50 to-stone-900/50 border border-white/5 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-[#c99335]/20 transition-colors"
-                >
-                  <span className="text-4xl sm:text-5xl filter drop-shadow-[0_0_15px_rgba(201,147,53,0.4)]">{medal}</span>
-                  <span className="text-xs sm:text-sm font-bold text-stone-300">
-                    {isAr ? `المركز ${i + 1}` : `${['1st', '2nd', '3rd'][i]} Place`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      </section>
+      <ScheduleAndPrizes lang={lang} dict={dict} />
 
       {/* ── CTA ── */}
       <section className="relative py-32 px-4 text-center overflow-hidden">
