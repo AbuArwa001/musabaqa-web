@@ -56,24 +56,41 @@ export default function LeaderboardClient({
 
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pingInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const connect = useCallback((categoryId: number) => {
     if (wsRef.current) {
+      wsRef.current.onopen = null
       wsRef.current.onclose = null
-      wsRef.current.close()
+      wsRef.current.onerror = null
+      wsRef.current.onmessage = null
+      try { wsRef.current.close() } catch {}
     }
     if (reconnectTimer.current) clearTimeout(reconnectTimer.current)
+    if (pingInterval.current) clearInterval(pingInterval.current)
 
     setWsStatus('connecting')
     const url = getWsUrl(categoryId)
     const ws = new WebSocket(url)
     wsRef.current = ws
 
-    ws.onopen = () => setWsStatus('connected')
+    ws.onopen = () => {
+      setWsStatus('connected')
+      // Send keepalive ping every 15 seconds to prevent idle timeout
+      pingInterval.current = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.send(JSON.stringify({ type: 'ping' }))
+          } catch {}
+        }
+      }, 15000)
+    }
 
     ws.onmessage = (event) => {
       try {
-        const payload: LeaderboardPayload = JSON.parse(event.data)
+        const payload: any = JSON.parse(event.data)
+        if (payload?.type === 'pong') return
+
         if (Array.isArray(payload.entries)) {
           // Sort by rank or score descending
           const sorted = [...payload.entries].sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
@@ -87,6 +104,7 @@ export default function LeaderboardClient({
 
     ws.onclose = () => {
       setWsStatus('disconnected')
+      if (pingInterval.current) clearInterval(pingInterval.current)
       reconnectTimer.current = setTimeout(() => connect(categoryId), 3000)
     }
 
@@ -96,9 +114,27 @@ export default function LeaderboardClient({
   useEffect(() => {
     if (selectedCategoryId === null) return
     connect(selectedCategoryId)
+
+    const handleNetworkOrVisibility = () => {
+      if (document.visibilityState === 'visible' && (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED || wsRef.current.readyState === WebSocket.CLOSING)) {
+        connect(selectedCategoryId)
+      }
+    }
+    window.addEventListener('online', handleNetworkOrVisibility)
+    document.addEventListener('visibilitychange', handleNetworkOrVisibility)
+
     return () => {
-      wsRef.current?.close()
+      window.removeEventListener('online', handleNetworkOrVisibility)
+      document.removeEventListener('visibilitychange', handleNetworkOrVisibility)
+      if (wsRef.current) {
+        wsRef.current.onopen = null
+        wsRef.current.onclose = null
+        wsRef.current.onerror = null
+        wsRef.current.onmessage = null
+        try { wsRef.current.close() } catch {}
+      }
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current)
+      if (pingInterval.current) clearInterval(pingInterval.current)
     }
   }, [selectedCategoryId, connect])
 
